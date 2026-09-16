@@ -3,6 +3,7 @@
 > **Few-Shot Human-Object Interaction (HOI) Detection with Geometric Hallucination Veto**
 
 [![Open Interactive Demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Colab_Demo.ipynb)
+[![Open Error Analysis & Few-Shot in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Error_Analysis_and_FewShot.ipynb)
 [![Open Dataset Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_HICO_DET_Benchmark.ipynb)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)

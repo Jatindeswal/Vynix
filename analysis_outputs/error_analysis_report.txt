@@ -1,0 +1,58 @@
+PROJECT VYNIX — DEEP ERROR ANALYSIS REPORT
+============================================================
+
+Total HOI Classes: 600
+Mean AP: 22.17%
+Median AP: 15.48%
+Rare Mean AP: 18.57% (155 classes)
+Non-Rare Mean AP: 23.42% (445 classes)
+
+TOP 20 BEST CLASSES:
+  ride            horse            AP= 90.89%  (non-rare)
+  ride            elephant         AP= 87.16%  (non-rare)
+  feed            giraffe          AP= 86.44%  (non-rare)
+  wash            cat              AP= 83.69%  (rare)
+  ride            bicycle          AP= 81.99%  (non-rare)
+  pet             zebra            AP= 81.67%  (rare)
+  jump            horse            AP= 80.66%  (non-rare)
+  herd            sheep            AP= 73.88%  (non-rare)
+  race            horse            AP= 73.39%  (non-rare)
+  watch           giraffe          AP= 72.62%  (non-rare)
+  race            motorcycle       AP= 71.36%  (non-rare)
+  ride            boat             AP= 71.20%  (non-rare)
+  eat             broccoli         AP= 71.01%  (non-rare)
+  hold            umbrella         AP= 70.94%  (non-rare)
+  carry           umbrella         AP= 70.36%  (non-rare)
+  jump            snowboard        AP= 69.58%  (non-rare)
+  kiss            giraffe          AP= 68.35%  (non-rare)
+  ride            snowboard        AP= 68.10%  (non-rare)
+  no_interaction  zebra            AP= 66.71%  (rare)
+  walk            cow              AP= 66.21%  (non-rare)
+
+BOTTOM 20 WORST CLASSES:
+  wash            orange           AP= 0.052%  (rare)
+  wash            knife            AP= 0.052%  (rare)
+  repair          hair drier       AP= 0.052%  (rare)
+  no_interaction  bear             AP= 0.052%  (rare)
+  greet           person           AP= 0.052%  (non-rare)
+  operate         toaster          AP= 0.052%  (rare)
+  wash            wine glass       AP= 0.057%  (rare)
+  lick            fork             AP= 0.059%  (rare)
+  repair          mouse            AP= 0.071%  (rare)
+  carry           potted plant     AP= 0.076%  (rare)
+  hold            potted plant     AP= 0.076%  (rare)
+  pick            orange           AP= 0.085%  (rare)
+  load            surfboard        AP= 0.091%  (rare)
+  kiss            sheep            AP= 0.092%  (rare)
+  smell           carrot           AP= 0.092%  (rare)
+  no_interaction  hair drier       AP= 0.097%  (rare)
+  pet             bird             AP= 0.099%  (rare)
+  jump            car              AP= 0.100%  (rare)
+  stab            person           AP= 0.105%  (rare)
+  hold            toaster          AP= 0.106%  (rare)
+
+FAILURE MODE BREAKDOWN:
+  Strong  (AP > 50%):  76 classes
+  Moderate (20-50%):   181 classes
+  Weak     (5-20%):    193 classes
+  Critical (< 5%):     150 classes
