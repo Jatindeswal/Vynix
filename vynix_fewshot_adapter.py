@@ -176,14 +176,26 @@ class FeatureExtractor:
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
 
+    @staticmethod
+    def _safe_extract(feats):
+        if hasattr(feats, "pooler_output") and feats.pooler_output is not None:
+            return feats.pooler_output
+        if hasattr(feats, "text_embeds") and feats.text_embeds is not None:
+            return feats.text_embeds
+        if hasattr(feats, "image_embeds") and feats.image_embeds is not None:
+            return feats.image_embeds
+        if isinstance(feats, (tuple, list)):
+            return feats[0]
+        return feats
+
     @torch.no_grad()
     def extract_visual_feature(self, pil_crop: Image.Image) -> torch.Tensor:
         """Returns (512,) normalized visual embedding."""
         inputs = self.processor(images=pil_crop, return_tensors="pt")
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        feat = self.model.get_image_features(**inputs)         # (1, 512)
+        feat = self._safe_extract(self.model.get_image_features(**inputs))  # (1, 512)
         feat = feat / feat.norm(dim=-1, keepdim=True)
-        return feat.squeeze(0).cpu()                           # (512,)
+        return feat.squeeze(0).cpu()                                       # (512,)
 
     def detect(self, pil_image: Image.Image):
         """Returns (persons, objects) lists."""
@@ -218,7 +230,7 @@ class FeatureExtractor:
             batch = prompts[i:i+bs]
             inputs = self.processor(text=batch, return_tensors="pt", padding=True)
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            feats = self.model.get_text_features(**inputs)
+            feats = self._safe_extract(self.model.get_text_features(**inputs))
             feats = feats / feats.norm(dim=-1, keepdim=True)
             all_feats.append(feats.cpu())
 
