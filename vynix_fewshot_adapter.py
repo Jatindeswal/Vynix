@@ -367,10 +367,10 @@ class Vynix3StreamAdapter(nn.Module):
 
     def forward(
         self,
-        clip_logits: torch.Tensor,
-        visual_features: torch.Tensor,
-        spatial_features: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
+        clip_logits,
+        visual_features,
+        spatial_features=None,
+    ):
         """
         Args:
             clip_logits:      (B, 600) from text classifier
