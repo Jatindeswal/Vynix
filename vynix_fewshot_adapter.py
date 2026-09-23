@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 """
-Project Vynix — Few-Shot CLIP Adapter (Tip-Adapter-F)
-=====================================================
-Builds a lightweight learnable cache on top of frozen CLIP ViT-B/32 to
-push the zero-shot 22.17% mAP baseline higher using K-shot examples.
-
-Architecture (Tip-Adapter-F):
-    f_visual    = CLIP_vision(union_crop)                    # (1, 512) frozen
-    affinity    = exp(-beta * (1 - f_visual @ cache_keys.T)) # (1, N)
-    cache_logit = affinity @ cache_values                    # (1, 600)
-    clip_logit  = f_visual @ text_weights.T                  # (1, 600)
-    final       = clip_logit + alpha * cache_logit            # residual blend
-
-Only alpha, beta (and optionally cache_keys) are trained.  CLIP stays frozen.
+Project Vynix — 3-Stream Spatial-Visual Few-Shot Adapter (Tip-Adapter-F)
+======================================================================
+Upgrades the zero-shot baseline (22.17% mAP) by integrating:
+1. 3-Stream Visual Fusion:
+   - Human Crop (f_h in R^512): Captures human pose, gaze, and hands
+   - Object Crop (f_o in R^512): Preserves small object details (knife, orange, phone)
+   - Union Crop (f_u in R^512): Preserves global interaction context
+   - Fused Representation: f_vis = [f_h || f_o || f_u] in R^1536
+2. Continuous Spatial Geometry MLP:
+   - Encodes 8D relative bounding-box geometry [dx, dy, wp, hp, wo, ho, IoU, area_ratio]
+   - Learns interaction-specific spatial likelihood priors P_spatial in [0, 1]^600
+3. Tip-Adapter-F Multi-Stream Cache:
+   - Stores few-shot exemplar embeddings without fine-tuning frozen CLIP backbone
+   - Blends visual cache affinity with text classifier logits
+4. Vynix Geometric Override Gate:
+   - Hard safety gate vetoing contact predictions when IoU == 0
 
 Usage:
     python vynix_fewshot_adapter.py --dataset-dir E:\\Dataset --k-shots 1 5 10 \\
-        --device cuda --eval-limit 500 --output-dir fewshot_results
+        --device cuda --detector-conf 0.08 --use-3stream --use-spatial-mlp \\
+        --eval-limit 500 --output-dir fewshot_results
 """
 
 import argparse
@@ -29,7 +33,7 @@ import re
 import sys
 import time
 from collections import Counter, defaultdict
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import pandas as pd
@@ -43,14 +47,14 @@ try:
     from ultralytics import YOLO
     from transformers import CLIPModel, CLIPProcessor
 except ImportError:
-    sys.exit("Install: pip install ultralytics transformers")
+    sys.exit("Install required packages: pip install ultralytics transformers")
 
 try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 except ImportError:
-    plt = None  # charts optional
+    plt = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -85,7 +89,7 @@ CONTACT_VERBS = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §2  HELPERS
+# §2  HELPERS & SPATIAL GEOMETRY
 # ═══════════════════════════════════════════════════════════════════════════
 
 def normalize_name(name: str) -> str:
@@ -123,17 +127,45 @@ def make_prompt(gerund: str, obj: str) -> str:
         return f"a person standing near {art} {o} without interacting"
     return f"a person {g} {art} {o}"
 
-def compute_iou(a, b):
+def compute_iou(a: List[float], b: List[float]) -> float:
     ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
     ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
     inter = max(0.0, ix2 - ix1) * max(0.0, iy2 - iy1)
-    aa = (a[2]-a[0])*(a[3]-a[1])
-    ab = (b[2]-b[0])*(b[3]-b[1])
+    aa = max(0.0, a[2] - a[0]) * max(0.0, a[3] - a[1])
+    ab = max(0.0, b[2] - b[0]) * max(0.0, b[3] - b[1])
     union = aa + ab - inter
     return inter / union if union > 0 else 0.0
 
-def union_box(a, b):
-    return [min(a[0],b[0]), min(a[1],b[1]), max(a[2],b[2]), max(a[3],b[3])]
+def compute_union_box(a: List[float], b: List[float]) -> List[float]:
+    return [min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])]
+
+def compute_spatial_vector(p_box: List[float], o_box: List[float], img_w: int, img_h: int) -> torch.Tensor:
+    """
+    Computes an 8D normalized continuous spatial relationship vector:
+    [dx, dy, wp, hp, wo, ho, IoU, log_area_ratio]
+    """
+    w_safe = max(float(img_w), 1.0)
+    h_safe = max(float(img_h), 1.0)
+
+    c_px = (p_box[0] + p_box[2]) / (2.0 * w_safe)
+    c_py = (p_box[1] + p_box[3]) / (2.0 * h_safe)
+    c_ox = (o_box[0] + o_box[2]) / (2.0 * w_safe)
+    c_oy = (o_box[1] + o_box[3]) / (2.0 * h_safe)
+
+    dx = c_px - c_ox
+    dy = c_py - c_oy
+
+    wp = (p_box[2] - p_box[0]) / w_safe
+    hp = (p_box[3] - p_box[1]) / h_safe
+    wo = (o_box[2] - o_box[0]) / w_safe
+    ho = (o_box[3] - o_box[1]) / h_safe
+
+    iou_val = compute_iou(p_box, o_box)
+    area_p = max(wp * hp, 1e-5)
+    area_o = max(wo * ho, 1e-5)
+    log_area_ratio = math.log(area_p / area_o)
+
+    return torch.tensor([dx, dy, wp, hp, wo, ho, iou_val, log_area_ratio], dtype=torch.float32)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -162,17 +194,50 @@ class HOIMeta:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §4  FEATURE EXTRACTOR  (Frozen CLIP + YOLO)
+# §4  SPATIAL GEOMETRY MLP
 # ═══════════════════════════════════════════════════════════════════════════
 
-class FeatureExtractor:
-    """Extracts 512-d CLIP visual features from union crops."""
+class SpatialMLP(nn.Module):
+    """
+    Continuous Spatial Geometry MLP:
+    Maps 8D relative spatial vector -> 600 interaction probability priors.
+    """
+    def __init__(self, num_classes: int = 600, hidden_dim: int = 64):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(8, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, num_classes),
+            nn.Sigmoid(),
+        )
 
-    def __init__(self, device: str):
+    def forward(self, spatial_vec: torch.Tensor) -> torch.Tensor:
+        """Args: (B, 8) -> Returns: (B, 600) priors in [0, 1]"""
+        return self.net(spatial_vec)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# §5  MULTI-STREAM FEATURE EXTRACTOR
+# ═══════════════════════════════════════════════════════════════════════════
+
+class MultiStreamFeatureExtractor:
+    """
+    Extracts high-resolution visual embeddings for:
+    - Person crop (hands, posture, gaze)
+    - Object crop (knife, fork, orange, phone details)
+    - Union crop (contextual interaction)
+    """
+
+    def __init__(self, device: str, detector_conf: float = 0.08, use_3stream: bool = True):
         self.device = device
-        print("  Loading YOLOv8-nano...")
+        self.detector_conf = detector_conf
+        self.use_3stream = use_3stream
+        self.feature_dim = 1536 if use_3stream else 512
+
+        print(f"  Loading YOLOv8-nano (Confidence threshold = {detector_conf})...")
         self.yolo = YOLO("yolov8n.pt")
-        print("  Loading CLIP ViT-B/32...")
+        print("  Loading CLIP ViT-B/32 (Vision & Text Backbones)...")
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
 
@@ -189,23 +254,56 @@ class FeatureExtractor:
         return feats
 
     @torch.no_grad()
-    def extract_visual_feature(self, pil_crop: Image.Image) -> torch.Tensor:
-        """Returns (512,) normalized visual embedding."""
+    def _encode_crop(self, pil_crop: Image.Image) -> torch.Tensor:
         inputs = self.processor(images=pil_crop, return_tensors="pt")
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        feat = self._safe_extract(self.model.get_image_features(**inputs))  # (1, 512)
+        feat = self._safe_extract(self.model.get_image_features(**inputs))
         feat = feat / feat.norm(dim=-1, keepdim=True)
-        return feat.squeeze(0).cpu()                                       # (512,)
+        return feat.squeeze(0).cpu()  # (512,)
+
+    def extract_visual_feature(
+        self, pil_img: Image.Image, p_box: List[float], o_box: List[float], u_box: List[float]
+    ) -> torch.Tensor:
+        """
+        Extracts and concatenates 3-stream visual representations.
+        Returns:
+            (1536,) if use_3stream=True else (512,)
+        """
+        img_w, img_h = pil_img.size
+
+        # Clamp boxes safely
+        def safe_crop(b):
+            x1 = max(0, min(int(b[0]), img_w - 2))
+            y1 = max(0, min(int(b[1]), img_h - 2))
+            x2 = max(x1 + 2, min(int(b[2]), img_w))
+            y2 = max(y1 + 2, min(int(b[3]), img_h))
+            return pil_img.crop((x1, y1, x2, y2))
+
+        u_crop = safe_crop(u_box)
+        f_union = self._encode_crop(u_crop)
+
+        if not self.use_3stream:
+            return f_union
+
+        p_crop = safe_crop(p_box)
+        o_crop = safe_crop(o_box)
+
+        f_person = self._encode_crop(p_crop)
+        f_object = self._encode_crop(o_crop)
+
+        # Concatenate 3 normalized streams
+        f_fused = torch.cat([f_person, f_object, f_union], dim=-1)
+        return f_fused / f_fused.norm(dim=-1, keepdim=True)
 
     def detect(self, pil_image: Image.Image):
-        """Returns (persons, objects) lists."""
+        """Returns detected (persons, objects) with lower threshold for high recall."""
         results = self.yolo(pil_image, device=self.device, verbose=False)
         persons, objects = [], []
         for r in results:
             for i in range(len(r.boxes)):
                 cls_id = int(r.boxes.cls[i].item())
                 conf = float(r.boxes.conf[i].item())
-                if conf < 0.25:
+                if conf < self.detector_conf:
                     continue
                 box = r.boxes.xyxy[i].tolist()
                 if cls_id == 0:
@@ -216,14 +314,13 @@ class FeatureExtractor:
 
     @torch.no_grad()
     def build_text_weights(self, meta: HOIMeta) -> torch.Tensor:
-        """Build (num_classes, 512) text classifier weight matrix."""
+        """Build (num_classes, 512) normalized text classifier matrix."""
         prompts = []
         for hoi_id in range(meta.num_classes):
             ger = meta.hoi_to_gerund[hoi_id]
             obj = meta.hoi_to_obj[hoi_id]
             prompts.append(make_prompt(ger, obj))
 
-        # Process in batches to avoid OOM
         all_feats = []
         bs = 64
         for i in range(0, len(prompts), bs):
@@ -234,67 +331,87 @@ class FeatureExtractor:
             feats = feats / feats.norm(dim=-1, keepdim=True)
             all_feats.append(feats.cpu())
 
-        return torch.cat(all_feats, dim=0)  # (600, 512)
+        return torch.cat(all_feats, dim=0)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §5  TIP-ADAPTER-F  (Learnable Few-Shot Cache)
+# §6  VYNIX 3-STREAM SPATIAL-VISUAL ADAPTER (Tip-Adapter-F + Spatial MLP)
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TipAdapterF(nn.Module):
+class Vynix3StreamAdapter(nn.Module):
     """
-    Tip-Adapter-F: Training-Free CLIP-Adapter with learnable parameters.
-
-    Math:
-        affinity   = exp(-beta * (1 - f @ cache_keys.T))
-        cache_logit = affinity @ cache_values
-        final      = clip_logit + alpha * cache_logit
+    3-Stream Spatial-Visual Adapter:
+    - Multi-stream visual cache (N, 1536)
+    - Continuous spatial MLP (8 -> 64 -> 600)
+    - Residual logit blending with frozen CLIP text classifier
     """
 
-    def __init__(self, cache_keys: torch.Tensor, cache_values: torch.Tensor):
+    def __init__(
+        self,
+        cache_keys: torch.Tensor,
+        cache_values: torch.Tensor,
+        use_spatial_mlp: bool = True,
+        num_classes: int = 600,
+    ):
         super().__init__()
-        # cache_keys: (N, 512), cache_values: (N, C)
         self.cache_keys = nn.Parameter(cache_keys.clone())
         self.alpha = nn.Parameter(torch.tensor(1.0))
         self.beta = nn.Parameter(torch.tensor(5.5))
         self.register_buffer("cache_values", cache_values)
 
-    def forward(self, clip_logits: torch.Tensor, features: torch.Tensor) -> torch.Tensor:
+        self.use_spatial_mlp = use_spatial_mlp
+        if use_spatial_mlp:
+            self.spatial_mlp = SpatialMLP(num_classes=num_classes)
+        else:
+            self.spatial_mlp = None
+
+    def forward(
+        self,
+        clip_logits: torch.Tensor,
+        visual_features: torch.Tensor,
+        spatial_features: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         """
         Args:
-            clip_logits: (B, C) from text classifier
-            features:    (B, 512) visual features
+            clip_logits:      (B, 600) from text classifier
+            visual_features:  (B, 1536) fused visual crop embeddings
+            spatial_features: (B, 8) normalized spatial geometry
         Returns:
-            (B, C) blended logits
+            (B, 600) blended logits
         """
-        # Affinity between test features and cached training features
-        affinity = features @ self.cache_keys.T                       # (B, N)
-        affinity = (-self.beta * (1.0 - affinity)).exp()              # temperature
-        cache_logits = affinity @ self.cache_values                   # (B, C)
-        return clip_logits + self.alpha * cache_logits
+        # Cosine affinity against visual cache
+        affinity = visual_features @ self.cache_keys.T
+        affinity = (-self.beta * (1.0 - affinity)).exp()
+        cache_logits = affinity @ self.cache_values
+
+        blended_logits = clip_logits + self.alpha * cache_logits
+
+        if self.use_spatial_mlp and spatial_features is not None:
+            spatial_priors = self.spatial_mlp(spatial_features)
+            # Add spatial log-prior to logits
+            spatial_log_prior = torch.log(spatial_priors + 1e-6)
+            blended_logits = blended_logits + 0.5 * spatial_log_prior
+
+        return blended_logits
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §6  CACHE BUILDER  (K-Shot Sampling from Training Set)
+# §7  CACHE BUILDER (3-Stream Exemplar Sampling)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def build_few_shot_cache(
     train_files: List[str],
     meta: HOIMeta,
-    extractor: FeatureExtractor,
+    extractor: MultiStreamFeatureExtractor,
     k_shot: int,
     max_images: int = 5000,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Sample K positive training images per HOI class and extract CLIP features.
-
-    Returns:
-        cache_keys:   (N, 512)  visual feature vectors
-        cache_values: (N, C)    one-hot label vectors
+    Samples K training exemplars per HOI class and extracts 3-stream visual features
+    and 8D spatial geometry vectors.
     """
-    print(f"\n  Building {k_shot}-shot cache...")
+    print(f"\n  Building {k_shot}-shot 3-Stream cache...")
 
-    # Step 1: Index which images are positive for each HOI class
     class_to_images: Dict[int, List[int]] = defaultdict(list)
     all_rows = []
 
@@ -311,11 +428,9 @@ def build_few_shot_cache(
         if len(all_rows) >= max_images:
             break
 
-    print(f"    Indexed {len(all_rows)} training images, {len(class_to_images)} classes with positives.")
+    print(f"    Indexed {len(all_rows)} training images across {len(class_to_images)} classes.")
 
-    # Step 2: Sample K images per class
     sampled_indices = set()
-    class_samples: Dict[int, List[int]] = {}
     rng = np.random.RandomState(42)
 
     for hoi_id in range(meta.num_classes):
@@ -324,21 +439,18 @@ def build_few_shot_cache(
             continue
         k = min(k_shot, len(candidates))
         chosen = rng.choice(candidates, size=k, replace=False).tolist()
-        class_samples[hoi_id] = chosen
         sampled_indices.update(chosen)
 
-    print(f"    Selected {len(sampled_indices)} unique images for cache extraction.")
+    print(f"    Selected {len(sampled_indices)} images for 3-Stream exemplar extraction.")
 
-    # Step 3: Extract CLIP features for each sampled image's union crop
     cache_keys_list = []
     cache_values_list = []
-    processed = 0
+    spatial_vecs_list = []
 
-    for img_idx in tqdm(sorted(sampled_indices), desc="    Extracting cache features", unit="img"):
+    for img_idx in tqdm(sorted(sampled_indices), desc="    Extracting 3-stream cache", unit="img"):
         row = all_rows[img_idx]
         pos_set = set(parse_int_list(row.get("positive_objects")))
 
-        # Decode image
         img_data = row["image"]
         if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
             pil_img = Image.open(io.BytesIO(img_data["bytes"]))
@@ -349,14 +461,12 @@ def build_few_shot_cache(
         if pil_img.mode != "RGB":
             pil_img = pil_img.convert("RGB")
 
-        # Detect persons and objects
         persons, objects = extractor.detect(pil_img)
         if not persons or not objects:
             continue
 
         img_w, img_h = pil_img.size
 
-        # For each valid person-object pair, extract feature
         for (p_box, _), (o_box, _, o_cls) in [(p, o) for p in persons[:3] for o in objects[:5]]:
             coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
             if not coco_name:
@@ -366,72 +476,71 @@ def build_few_shot_cache(
             if not entries:
                 continue
 
-            # Check if any HOI class for this object is actually positive
-            relevant_hoi_ids = [hid for _, _, hid in entries if hid in pos_set]
-            if not relevant_hoi_ids:
+            rel_ids = [hid for _, _, hid in entries if hid in pos_set]
+            if not rel_ids:
                 continue
 
-            ubox = union_box(p_box, o_box)
-            x1 = max(0, int(ubox[0]))
-            y1 = max(0, int(ubox[1]))
-            x2 = min(img_w, int(ubox[2]))
-            y2 = min(img_h, int(ubox[3]))
-            if (x2-x1) < 10 or (y2-y1) < 10:
-                continue
+            u_box = compute_union_box(p_box, o_box)
+            f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box)
+            s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
 
-            crop = pil_img.crop((x1, y1, x2, y2))
-            feat = extractor.extract_visual_feature(crop)  # (512,)
-
-            # Build one-hot label
             label = torch.zeros(meta.num_classes)
-            for hid in relevant_hoi_ids:
+            for hid in rel_ids:
                 label[hid] = 1.0
 
-            cache_keys_list.append(feat)
+            cache_keys_list.append(f_fused)
             cache_values_list.append(label)
-            processed += 1
-            break  # One crop per image is enough
+            spatial_vecs_list.append(s_vec)
+            break
 
     if not cache_keys_list:
-        print("    ⚠ No cache entries found! Returning empty cache.")
-        return torch.zeros(1, 512), torch.zeros(1, meta.num_classes)
+        return (
+            torch.zeros(1, extractor.feature_dim),
+            torch.zeros(1, meta.num_classes),
+            torch.zeros(1, 8),
+        )
 
-    keys = torch.stack(cache_keys_list)    # (N, 512)
-    values = torch.stack(cache_values_list)  # (N, C)
-    print(f"    ✓ Cache built: {keys.shape[0]} entries × {keys.shape[1]}-d features")
-    return keys, values
+    keys = torch.stack(cache_keys_list)
+    values = torch.stack(cache_values_list)
+    spatials = torch.stack(spatial_vecs_list)
+    print(f"    ✓ 3-Stream cache ready: {keys.shape[0]} entries × {keys.shape[1]}-d visual features")
+    return keys, values, spatials
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §7  ADAPTER TRAINING
+# §8  ADAPTER TRAINING
 # ═══════════════════════════════════════════════════════════════════════════
 
 def train_adapter(
-    adapter: TipAdapterF,
+    adapter: Vynix3StreamAdapter,
     train_features: torch.Tensor,
     train_labels: torch.Tensor,
+    train_spatials: torch.Tensor,
     text_weights: torch.Tensor,
     epochs: int = 20,
     lr: float = 1e-3,
     device: str = "cuda",
 ) -> List[float]:
-    """
-    Fine-tune alpha, beta (and cache_keys) for a few epochs.
-    Returns list of per-epoch losses.
-    """
+    """Fine-tunes alpha, beta, and spatial MLP parameters."""
     adapter = adapter.to(device)
     text_weights = text_weights.to(device)
     train_features = train_features.to(device)
     train_labels = train_labels.to(device)
+    train_spatials = train_spatials.to(device)
+
+    # Union stream is the last 512 dims if 3-stream
+    if train_features.shape[-1] == 1536:
+        f_union = train_features[:, 1024:1536]
+    else:
+        f_union = train_features
 
     optimizer = torch.optim.AdamW(adapter.parameters(), lr=lr, weight_decay=0.01)
     losses = []
 
     for epoch in range(epochs):
         adapter.train()
-        # Forward pass (full batch — cache is small enough)
-        clip_logits = train_features @ text_weights.T     # (N, C)
-        final_logits = adapter(clip_logits, train_features)  # (N, C)
+        clip_logits = f_union @ text_weights.T
+        final_logits = adapter(clip_logits, train_features, train_spatials)
 
         loss = F.binary_cross_entropy_with_logits(final_logits, train_labels)
 
@@ -449,7 +558,7 @@ def train_adapter(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §8  EVALUATION ENGINE
+# §9  EVALUATION ENGINE
 # ═══════════════════════════════════════════════════════════════════════════
 
 def compute_ap(scores: List[float], labels: List[int]) -> float:
@@ -466,26 +575,24 @@ def compute_ap(scores: List[float], labels: List[int]) -> float:
     rec = tp / n_pos
     mrec = np.concatenate(([0.0], rec, [1.0]))
     mpre = np.concatenate(([0.0], prec, [0.0]))
-    for i in range(len(mpre)-1, 0, -1):
-        mpre[i-1] = max(mpre[i-1], mpre[i])
+    for i in range(len(mpre) - 1, 0, -1):
+        mpre[i - 1] = max(mpre[i - 1], mpre[i])
     ch = np.where(mrec[1:] != mrec[:-1])[0]
-    return float(np.sum((mrec[ch+1] - mrec[ch]) * mpre[ch+1]))
+    return float(np.sum((mrec[ch + 1] - mrec[ch]) * mpre[ch + 1]))
 
 
 def evaluate_adapter(
-    adapter: TipAdapterF,
-    extractor: FeatureExtractor,
+    adapter: Vynix3StreamAdapter,
+    extractor: MultiStreamFeatureExtractor,
     text_weights: torch.Tensor,
     meta: HOIMeta,
     test_files: List[str],
     device: str,
-    eval_limit: int = None,
+    eval_limit: Optional[int] = None,
 ) -> Dict:
-    """Run full HICO-DET evaluation with the adapter."""
     adapter = adapter.to(device).eval()
     text_weights_dev = text_weights.to(device)
 
-    # Load test data
     dfs = [pd.read_parquet(f) for f in test_files]
     test_df = pd.concat(dfs, ignore_index=True)
     if eval_limit:
@@ -533,26 +640,22 @@ def evaluate_adapter(
             if not entries:
                 continue
 
-            ubox = union_box(p_box, o_box)
-            x1 = max(0, int(ubox[0]))
-            y1 = max(0, int(ubox[1]))
-            x2 = min(img_w, int(ubox[2]))
-            y2 = min(img_h, int(ubox[3]))
-            if (x2-x1) < 10 or (y2-y1) < 10:
-                continue
+            u_box = compute_union_box(p_box, o_box)
+            f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box).unsqueeze(0).to(device)
+            s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h).unsqueeze(0).to(device)
 
-            crop = pil_img.crop((x1, y1, x2, y2))
-            feat = extractor.extract_visual_feature(crop).unsqueeze(0).to(device)  # (1, 512)
+            # Union feature for text logits
+            f_union = f_fused[:, 1024:1536] if f_fused.shape[-1] == 1536 else f_fused
 
             with torch.no_grad():
-                clip_logits = feat @ text_weights_dev.T  # (1, 600)
-                final_logits = adapter(clip_logits, feat)  # (1, 600)
+                clip_logits = f_union @ text_weights_dev.T
+                final_logits = adapter(clip_logits, f_fused, s_vec)
                 probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
 
             for verb, _, hoi_id in entries:
                 raw_prob = probs[hoi_id].item()
 
-                # Vynix Logic Gate: geometric override
+                # Vynix Geometric Gate
                 if verb in CONTACT_VERBS and iou_val == 0.0:
                     gated_prob = 0.0
                     total_vetoes += 1
@@ -565,7 +668,6 @@ def evaluate_adapter(
 
         all_preds[img_idx] = preds
 
-    # Compute mAP
     all_hoi_ids = sorted(meta.hoi_to_obj.keys())
     per_class_ap = {}
     for hoi_id in all_hoi_ids:
@@ -574,7 +676,6 @@ def evaluate_adapter(
         per_class_ap[hoi_id] = compute_ap(scores, labels)
 
     full_aps = [per_class_ap[h] for h in all_hoi_ids]
-    # Approximate rare/non-rare split
     rare_ids = {h for h in range(meta.num_classes) if h % 4 == 0}
     nonrare_ids = set(range(meta.num_classes)) - rare_ids
     rare_aps = [per_class_ap[h] for h in rare_ids if h in per_class_ap]
@@ -591,174 +692,128 @@ def evaluate_adapter(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §9  CHART GENERATION
-# ═══════════════════════════════════════════════════════════════════════════
-
-def generate_charts(results: Dict, all_losses: Dict, output_dir: str):
-    if plt is None:
-        print("  ⚠ matplotlib not available, skipping charts.")
-        return
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Chart 1: mAP comparison bar chart
-    fig, ax = plt.subplots(figsize=(12, 6))
-    k_values = sorted(results.keys())
-    splits = ["Full (600)", "Rare", "Non-Rare"]
-    x = np.arange(len(splits))
-    width = 0.8 / len(k_values)
-    colors = ["#95a5a6", "#3498db", "#2ecc71", "#e74c3c", "#9b59b6"]
-
-    for i, k in enumerate(k_values):
-        vals = [results[k]["mAP_full"], results[k]["mAP_rare"], results[k]["mAP_non_rare"]]
-        bars = ax.bar(x + i * width - (len(k_values)-1)*width/2, vals, width,
-                      label=f"{k}-shot", color=colors[i % len(colors)], edgecolor="black")
-        for bar in bars:
-            h = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, h + 0.3, f"{h:.1f}%",
-                    ha="center", va="bottom", fontsize=8, fontweight="bold")
-
-    ax.set_ylabel("mAP (%)", fontsize=12, fontweight="bold")
-    ax.set_title("Few-Shot Adapter Performance: Zero-Shot vs K-Shot", fontsize=14, fontweight="bold")
-    ax.set_xticks(x)
-    ax.set_xticklabels(splits, fontsize=11)
-    ax.legend(fontsize=10)
-    ax.grid(axis="y", linestyle="--", alpha=0.7)
-    fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, "fewshot_comparison_bar.png"), dpi=200, bbox_inches="tight")
-    plt.close(fig)
-    print(f"  ✓ Saved fewshot_comparison_bar.png")
-
-    # Chart 2: Training loss curves
-    if all_losses:
-        fig, ax = plt.subplots(figsize=(10, 5))
-        for k, losses in sorted(all_losses.items()):
-            if losses:
-                ax.plot(range(1, len(losses)+1), losses, marker="o", markersize=4, label=f"{k}-shot")
-        ax.set_xlabel("Epoch", fontsize=12, fontweight="bold")
-        ax.set_ylabel("BCE Loss", fontsize=12, fontweight="bold")
-        ax.set_title("Tip-Adapter-F Training Loss Curves", fontsize=14, fontweight="bold")
-        ax.legend(fontsize=11)
-        ax.grid(linestyle="--", alpha=0.7)
-        fig.tight_layout()
-        fig.savefig(os.path.join(output_dir, "fewshot_training_loss.png"), dpi=200, bbox_inches="tight")
-        plt.close(fig)
-        print(f"  ✓ Saved fewshot_training_loss.png")
-
-
-# ═══════════════════════════════════════════════════════════════════════════
 # §10  MAIN
 # ═══════════════════════════════════════════════════════════════════════════
 
 def main():
-    parser = argparse.ArgumentParser(description="Vynix Few-Shot Adapter (Tip-Adapter-F)")
-    parser.add_argument("--dataset-dir", type=str, default=r"E:\Dataset",
-                        help="Path to HICO-DET dataset directory")
-    parser.add_argument("--k-shots", type=int, nargs="+", default=[1, 5, 10],
-                        help="K-shot values to evaluate")
+    parser = argparse.ArgumentParser(description="Vynix 3-Stream Spatial-Visual Adapter")
+    parser.add_argument("--dataset-dir", type=str, default=r"E:\Dataset")
+    parser.add_argument("--k-shots", type=int, nargs="+", default=[1, 5, 10])
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--detector-conf", type=float, default=0.08,
+                        help="YOLO detection confidence (lowered to 0.08 to recall small objects)")
+    parser.add_argument("--use-3stream", action="store_true", default=True,
+                        help="Use Human, Object, and Union 3-Stream fusion")
+    parser.add_argument("--use-spatial-mlp", action="store_true", default=True,
+                        help="Use continuous 8D spatial geometry MLP")
     parser.add_argument("--eval-limit", type=int, default=500,
-                        help="Max test images (None = full 9658)")
+                        help="Max test images for evaluation (None = full 9658)")
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--output-dir", type=str, default="fewshot_results")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print("=" * 70)
-    print("  PROJECT VYNIX — FEW-SHOT CLIP ADAPTER (Tip-Adapter-F)")
-    print("=" * 70)
+    print("=" * 75)
+    print("  PROJECT VYNIX — 3-STREAM SPATIAL-VISUAL FEW-SHOT ADAPTER")
+    print("=" * 75)
+    print(f"  Configuration:")
+    print(f"  • 3-Stream Visual Fusion  : {'Enabled (1536-d)' if args.use_3stream else 'Disabled (512-d)'}")
+    print(f"  • Spatial Geometry MLP    : {'Enabled (8D -> 64 -> 600)' if args.use_spatial_mlp else 'Disabled'}")
+    print(f"  • Detector Confidence     : {args.detector_conf} (rescuing small objects)")
+    print(f"  • Device                  : {args.device}")
 
-    # Load metadata
     meta = HOIMeta(args.dataset_dir)
-    print(f"  ✓ Loaded {meta.num_classes} HOI classes.")
+    print(f"  ✓ Loaded {meta.num_classes} HOI interaction classes.")
 
-    # Initialize extractor
-    extractor = FeatureExtractor(args.device)
+    extractor = MultiStreamFeatureExtractor(
+        device=args.device,
+        detector_conf=args.detector_conf,
+        use_3stream=args.use_3stream,
+    )
 
-    # Build text classifier weights
-    print("\n  Building text classifier weights...")
-    text_weights = extractor.build_text_weights(meta)  # (600, 512)
-    print(f"  ✓ Text weights: {text_weights.shape}")
+    print("\n  Precomputing text classifier embeddings...")
+    text_weights = extractor.build_text_weights(meta)
+    print(f"  ✓ Text Weights: {text_weights.shape}")
 
-    # File paths
     train_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "train-*.parquet")))
     test_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "test-*.parquet")))
-    print(f"  ✓ Train shards: {len(train_files)}, Test shards: {len(test_files)}")
+    print(f"  ✓ Found {len(train_files)} train shards, {len(test_files)} test shards.")
 
-    # Zero-shot baseline (k=0, no adapter)
     all_results = {}
     all_losses = {}
 
-    print("\n" + "─" * 70)
-    print("  ▶ Evaluating 0-shot (Zero-Shot Baseline, no adapter)...")
-    print("─" * 70)
+    # Zero-shot baseline
+    print("\n" + "─" * 75)
+    print("  ▶ Evaluating Zero-Shot Baseline (without adapter)...")
+    print("─" * 75)
 
-    # For zero-shot, create a dummy adapter with empty cache
-    dummy_keys = torch.zeros(1, 512)
+    dummy_keys = torch.zeros(1, extractor.feature_dim)
     dummy_vals = torch.zeros(1, meta.num_classes)
-    dummy_adapter = TipAdapterF(dummy_keys, dummy_vals)
-    dummy_adapter.alpha.data.fill_(0.0)  # alpha=0 means purely text-based
+    dummy_adapter = Vynix3StreamAdapter(dummy_keys, dummy_vals, use_spatial_mlp=False)
+    dummy_adapter.alpha.data.fill_(0.0)
 
-    result_0 = evaluate_adapter(dummy_adapter, extractor, text_weights, meta,
+    res_zero = evaluate_adapter(dummy_adapter, extractor, text_weights, meta,
                                 test_files, args.device, args.eval_limit)
-    all_results[0] = result_0
-    print(f"\n  0-shot: Full={result_0['mAP_full']:.2f}%  Rare={result_0['mAP_rare']:.2f}%  "
-          f"Non-Rare={result_0['mAP_non_rare']:.2f}%  Vetoes={result_0['vetoes']}")
+    all_results[0] = res_zero
+    print(f"  0-Shot: Full={res_zero['mAP_full']:.2f}% | Rare={res_zero['mAP_rare']:.2f}% | "
+          f"Non-Rare={res_zero['mAP_non_rare']:.2f}% | Vetoes={res_zero['vetoes']}")
 
-    # K-shot runs
+    # K-shot evaluation
     for k in args.k_shots:
-        print(f"\n{'─' * 70}")
-        print(f"  ▶ Building and evaluating {k}-shot adapter...")
-        print("─" * 70)
+        print(f"\n{'─' * 75}")
+        print(f"  ▶ Training and Evaluating {k}-Shot 3-Stream Adapter...")
+        print("─" * 75)
 
-        # Build cache
-        cache_keys, cache_values = build_few_shot_cache(
+        cache_keys, cache_values, cache_spatials = build_few_shot_cache(
             train_files, meta, extractor, k, max_images=5000
         )
 
-        # Create adapter
-        adapter = TipAdapterF(cache_keys, cache_values)
+        adapter = Vynix3StreamAdapter(
+            cache_keys=cache_keys,
+            cache_values=cache_values,
+            use_spatial_mlp=args.use_spatial_mlp,
+            num_classes=meta.num_classes,
+        )
 
-        # Train
-        print(f"\n    Training Tip-Adapter-F ({k}-shot, {args.epochs} epochs)...")
-        losses = train_adapter(adapter, cache_keys, cache_values, text_weights,
-                               epochs=args.epochs, device=args.device)
+        losses = train_adapter(
+            adapter=adapter,
+            train_features=cache_keys,
+            train_labels=cache_values,
+            train_spatials=cache_spatials,
+            text_weights=text_weights,
+            epochs=args.epochs,
+            device=args.device,
+        )
         all_losses[k] = losses
 
-        # Evaluate
-        result_k = evaluate_adapter(adapter.cpu(), extractor, text_weights, meta,
-                                    test_files, args.device, args.eval_limit)
-        all_results[k] = result_k
-        print(f"\n  {k}-shot: Full={result_k['mAP_full']:.2f}%  Rare={result_k['mAP_rare']:.2f}%  "
-              f"Non-Rare={result_k['mAP_non_rare']:.2f}%  Vetoes={result_k['vetoes']}")
+        res_k = evaluate_adapter(adapter, extractor, text_weights, meta,
+                                 test_files, args.device, args.eval_limit)
+        all_results[k] = res_k
+        print(f"  {k}-Shot 3-Stream: Full={res_k['mAP_full']:.2f}% | Rare={res_k['mAP_rare']:.2f}% | "
+              f"Non-Rare={res_k['mAP_non_rare']:.2f}% | Vetoes={res_k['vetoes']}")
 
-    # Final results table
-    print("\n\n" + "=" * 70)
-    print("  🏆 VYNIX FEW-SHOT ADAPTER RESULTS (Tip-Adapter-F)")
-    print("=" * 70)
-    print(f"  {'K-Shot':<8} | {'Full mAP':>10} | {'Rare mAP':>10} | {'Non-Rare':>10} | {'Delta':>10}")
-    print("─" * 70)
+    # Summary table
+    print("\n\n" + "=" * 75)
+    print("  🏆 VYNIX 3-STREAM SPATIAL-VISUAL ADAPTER RESULTS")
+    print("=" * 75)
+    print(f"  {'Configuration':<24} | {'Full mAP':>10} | {'Rare mAP':>10} | {'Non-Rare':>10} | {'Delta':>10}")
+    print("─" * 75)
 
-    baseline_full = all_results[0]["mAP_full"]
+    base = all_results[0]["mAP_full"]
     for k in sorted(all_results.keys()):
         r = all_results[k]
-        delta = r["mAP_full"] - baseline_full
+        delta = r["mAP_full"] - base
         sign = "+" if delta >= 0 else ""
+        label = "0-Shot Baseline" if k == 0 else f"{k}-Shot 3-Stream"
         tag = "baseline" if k == 0 else f"{sign}{delta:.2f}%"
-        print(f"  {k:<8} | {r['mAP_full']:>9.2f}% | {r['mAP_rare']:>9.2f}% | "
-              f"{r['mAP_non_rare']:>9.2f}% | {tag:>10}")
-
-    print("=" * 70)
-
-    # Generate charts
-    print("\n  Generating charts...")
-    generate_charts(all_results, all_losses, args.output_dir)
+        print(f"  {label:<24} | {r['mAP_full']:>9.2f}% | {r['mAP_rare']:>9.2f}% | {r['mAP_non_rare']:>9.2f}% | {tag:>10}")
+    print("=" * 75)
 
     # Save CSV
-    csv_path = os.path.join(args.output_dir, "fewshot_results.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["k_shot", "mAP_full", "mAP_rare", "mAP_non_rare", "vetoes", "n_images"])
+    csv_out = os.path.join(args.output_dir, "vynix_3stream_adapter_results.csv")
+    with open(csv_out, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["k_shot", "mAP_full", "mAP_rare", "mAP_non_rare", "vetoes"])
         writer.writeheader()
         for k in sorted(all_results.keys()):
             r = all_results[k]
@@ -768,10 +823,8 @@ def main():
                 "mAP_rare": f"{r['mAP_rare']:.4f}",
                 "mAP_non_rare": f"{r['mAP_non_rare']:.4f}",
                 "vetoes": r["vetoes"],
-                "n_images": r["n_images"],
             })
-    print(f"  ✓ Results saved to {csv_path}")
-    print("\n✓ Done!")
+    print(f"  ✓ Saved results to {csv_out}")
 
 
 if __name__ == "__main__":
