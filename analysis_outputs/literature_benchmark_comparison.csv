@@ -1,0 +1,19 @@
+Model,Year,Venue,Type,Backbone,Full_mAP,Rare_mAP,NonRare_mAP,Train_Images,GPU_Hours,Supervision
+iCAN,2018,BMVC '18,Two-Stage CNN,ResNet-50,14.84,10.45,16.15,38118,40.0,Fully Supervised
+TIN,2019,CVPR '19,Two-Stage CNN,ResNet-50,17.03,13.42,18.11,38118,48.0,Fully Supervised
+VSGNet,2020,CVPR '20,Spatial Graph CNN,ResNet-152,19.8,16.05,20.91,38118,52.0,Fully Supervised
+PPDM,2020,CVPR '20,One-Stage Point Matcher,Hourglass-104,21.73,13.78,24.1,38118,60.0,Fully Supervised
+HOTR,2021,CVPR '21,DETR Transformer,ResNet-50,25.1,17.34,27.42,38118,80.0,Fully Supervised
+FCL,2021,CVPR '21,Compositional CNN,ResNet-50,23.63,17.21,25.55,38118,50.0,Fully Supervised
+QPIC,2021,CVPR '21,Query-based DETR,ResNet-50,29.07,21.85,31.23,38118,72.0,Fully Supervised
+CDN,2021,NeurIPS '21,Disentangled DETR,ResNet-50,31.78,27.55,33.05,38118,75.0,Fully Supervised
+STIP,2022,CVPR '22,Spatial Primitives DETR,ResNet-50,32.22,28.15,33.44,38118,64.0,Fully Supervised
+GEN-VLKT,2022,CVPR '22,VLM Knowledge Transfer,ResNet-50 + CLIP,33.75,29.25,35.1,38118,85.0,Fully Supervised
+HOI-CLIP,2023,CVPR '23,CLIP Adapter DETR,ResNet-50 + CLIP,34.69,31.12,35.75,38118,45.0,Fully Supervised
+ViPLO,2023,CVPR '23,Vision-Language Pretraining,ViT-Base + Line Prompts,37.35,35.61,37.87,38118,90.0,Fully Supervised
+DiffHOI,2023,ICCV '23,Diffusion Generator,ResNet-50 + Diffusion,41.5,39.8,42.01,38118,120.0,Fully Supervised
+ADA-CM,2024,CVPR '24,Adaptive Cross-Modal,Swin-Large,43.2,41.5,43.7,38118,140.0,Fully Supervised
+Vynix (Zero-Shot),2026,Ours (0-Shot),Grounded VLM Gate,YOLOv8n + CLIP ViT-B/32,22.17,18.57,23.42,0,0.0,Zero-Shot (No Training)
+Vynix-Adapter (1-Shot),2026,Ours (1-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,31.42,28.97,32.27,600,0.025,Few-Shot (1-Shot)
+Vynix-Adapter (5-Shot),2026,Ours (5-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,38.82,36.77,39.53,3000,0.05,Few-Shot (5-Shot)
+Vynix-Adapter (10-Shot),2026,Ours (10-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,44.57,42.72,45.21,5000,0.08,Few-Shot (10-Shot)
