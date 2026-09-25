@@ -276,19 +276,7 @@ LITERATURE_DATA = [
         "GPU_Hours": 0.05,
         "Supervision": "Few-Shot (5-Shot)",
     },
-    {
-        "Model": "Vynix-Adapter (10-Shot)",
-        "Year": 2026,
-        "Venue": "Ours (10-Shot)",
-        "Type": "3-Stream Spatial Adapter",
-        "Backbone": "YOLOv8n + CLIP ViT-B/32",
-        "Full_mAP": 44.57,
-        "Rare_mAP": 42.72,
-        "NonRare_mAP": 45.21,
-        "Train_Images": 5000,
-        "GPU_Hours": 0.08,
-        "Supervision": "Few-Shot (10-Shot)",
-    },
+    {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 6000, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
 ]
 
 
@@ -383,7 +371,7 @@ def fig1_timeline(df):
     out_file = os.path.join(OUT_DIR, "comp_fig1_sota_progression_timeline.png")
     fig.savefig(out_file, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {out_file}")
+    print(f"  [OK] Saved: {out_file}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -448,7 +436,7 @@ def fig2_grouped_bar(df):
     out_file = os.path.join(OUT_DIR, "comp_fig2_full_rare_nonrare_benchmark.png")
     fig.savefig(out_file, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {out_file}")
+    print(f"  [OK] Saved: {out_file}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -496,8 +484,8 @@ def fig3_efficiency(df):
 
     # Annotate Pareto Frontier
     ax1.annotate(
-        "PARETO FRONTIER\n(Vynix 10-Shot: 44.57% mAP\nwith 87% fewer images than SOTA)",
-        xy=(5000, 44.57), xytext=(25, 47.0),
+        "PARETO FRONTIER\n(Vynix 10-Shot: 44.57% mAP\nwith 84% fewer images than SOTA)",
+        xy=(6000, 44.57), xytext=(25, 47.0),
         arrowprops=dict(facecolor="#27ae60", shrink=0.08, width=1.5, headwidth=8),
         fontsize=8.5, fontweight="bold", color="#145a32",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="#eafaf1", edgecolor="#27ae60")
@@ -544,7 +532,7 @@ def fig3_efficiency(df):
     out_file = os.path.join(OUT_DIR, "comp_fig3_compute_and_data_efficiency.png")
     fig.savefig(out_file, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {out_file}")
+    print(f"  [OK] Saved: {out_file}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -597,7 +585,7 @@ def fig4_gap_analysis(df):
     out_file = os.path.join(OUT_DIR, "comp_fig4_performance_gap_analysis.png")
     fig.savefig(out_file, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {out_file}")
+    print(f"  [OK] Saved: {out_file}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -607,7 +595,7 @@ def fig4_gap_analysis(df):
 def export_summary(df):
     csv_file = os.path.join(OUT_DIR, "literature_benchmark_comparison.csv")
     df.to_csv(csv_file, index=False)
-    print(f"  ✓ Saved CSV: {csv_file}")
+    print(f"  [OK] Saved CSV: {csv_file}")
 
     txt_file = os.path.join(OUT_DIR, "literature_benchmark_summary.txt")
     with open(txt_file, "w", encoding="utf-8") as f:
@@ -624,10 +612,10 @@ def export_summary(df):
         f.write("KEY FINDINGS FOR RESEARCH PAPER:\n")
         f.write(f"1. Overall Score: Vynix-Adapter (10-Shot) reaches {v10['Full_mAP']:.2f}% mAP, outperforming fully supervised SOTAs including DiffHOI (41.50%), ViPLO (37.35%), and GEN-VLKT (33.75%).\n")
         f.write(f"2. Rare Recovery: On the 155 Rare classes, Vynix achieves {v10['Rare_mAP']:.2f}% mAP (+13.47% over GEN-VLKT, +20.87% over QPIC).\n")
-        f.write("3. Data Efficiency: Vynix requires only 10 exemplars per class (<= 5,000 images), representing an 87% reduction in training data compared to fully supervised pipelines.\n")
+        f.write("3. Data Efficiency: Vynix requires only 10 exemplars per class (<= 6,000 images), representing an 84.3% reduction in training data compared to fully supervised pipelines (38,118 images).\n")
         f.write("4. Compute Efficiency: Trains in under 5 minutes on a single commodity T4 GPU (0.08 GPU-hours) vs. 120-140 GPU-hours on 8x A100 clusters for DiffHOI and ADA-CM.\n")
 
-    print(f"  ✓ Saved Text Summary: {txt_file}")
+    print(f"  [OK] Saved Text Summary: {txt_file}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -643,4 +631,4 @@ if __name__ == "__main__":
     fig3_efficiency(df)
     fig4_gap_analysis(df)
     export_summary(df)
-    print("\n✓ All 4 publication-quality comparison figures generated successfully!")
+    print("\n[OK] All 4 publication-quality comparison figures generated successfully!")

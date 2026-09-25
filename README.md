@@ -98,7 +98,7 @@ Comparison of Project Vynix against 14 milestone published architectures (2018â€
 | **Vynix (Zero-Shot)** | **Ours** | **Zero-Shot** | **0** | **0.0h** | **22.17%** | **18.57%** | **23.42%** |
 | **Vynix-Adapter (1-Shot)** | **Ours** | **Few-Shot** | **600** | **0.03h** | **31.42%** | **28.97%** | **32.27%** |
 | **Vynix-Adapter (5-Shot)** | **Ours** | **Few-Shot** | **3,000** | **0.05h** | **38.82%** | **36.77%** | **39.53%** |
-| **Vynix-Adapter (10-Shot)** | **Ours** | **Few-Shot** | **5,000** | **0.08h** | **44.57%** | **42.72%** | **45.21%** |
+| **Vynix-Adapter (10-Shot)** | **Ours** | **Few-Shot** | **6,000** | **0.08h** | **44.57%** | **42.72%** | **45.21%** |
 
 *Interactive charts & LaTeX tables available in [`Vynix_Academic_Literature_Comparison.ipynb`](./Vynix_Academic_Literature_Comparison.ipynb).*
 

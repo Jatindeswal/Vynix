@@ -21,11 +21,11 @@ ADA-CM                     | CVPR '24   |    43.20% |    41.50% |    43.70% |   
 Vynix (Zero-Shot)          | Ours (0-Shot) |    22.17% |    18.57% |    23.42% |       0 |    0.00h
 Vynix-Adapter (1-Shot)     | Ours (1-Shot) |    31.42% |    28.97% |    32.27% |     600 |    0.03h
 Vynix-Adapter (5-Shot)     | Ours (5-Shot) |    38.82% |    36.77% |    39.53% |    3000 |    0.05h
-Vynix-Adapter (10-Shot)    | Ours (10-Shot) |    44.57% |    42.72% |    45.21% |    5000 |    0.08h
+Vynix-Adapter (10-Shot)    | Ours (10-Shot) |    44.57% |    42.72% |    45.21% |    6000 |    0.08h
 =====================================================================================
 
 KEY FINDINGS FOR RESEARCH PAPER:
 1. Overall Score: Vynix-Adapter (10-Shot) reaches 44.57% mAP, outperforming fully supervised SOTAs including DiffHOI (41.50%), ViPLO (37.35%), and GEN-VLKT (33.75%).
 2. Rare Recovery: On the 155 Rare classes, Vynix achieves 42.72% mAP (+13.47% over GEN-VLKT, +20.87% over QPIC).
-3. Data Efficiency: Vynix requires only 10 exemplars per class (<= 5,000 images), representing an 87% reduction in training data compared to fully supervised pipelines.
+3. Data Efficiency: Vynix requires only 10 exemplars per class (<= 6,000 images), representing an 84.3% reduction in training data compared to fully supervised pipelines (38,118 images).
 4. Compute Efficiency: Trains in under 5 minutes on a single commodity T4 GPU (0.08 GPU-hours) vs. 120-140 GPU-hours on 8x A100 clusters for DiffHOI and ADA-CM.

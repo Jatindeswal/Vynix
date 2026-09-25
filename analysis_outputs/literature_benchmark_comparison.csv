@@ -16,4 +16,4 @@ ADA-CM,2024,CVPR '24,Adaptive Cross-Modal,Swin-Large,43.2,41.5,43.7,38118,140.0,
 Vynix (Zero-Shot),2026,Ours (0-Shot),Grounded VLM Gate,YOLOv8n + CLIP ViT-B/32,22.17,18.57,23.42,0,0.0,Zero-Shot (No Training)
 Vynix-Adapter (1-Shot),2026,Ours (1-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,31.42,28.97,32.27,600,0.025,Few-Shot (1-Shot)
 Vynix-Adapter (5-Shot),2026,Ours (5-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,38.82,36.77,39.53,3000,0.05,Few-Shot (5-Shot)
-Vynix-Adapter (10-Shot),2026,Ours (10-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,44.57,42.72,45.21,5000,0.08,Few-Shot (10-Shot)
+Vynix-Adapter (10-Shot),2026,Ours (10-Shot),3-Stream Spatial Adapter,YOLOv8n + CLIP ViT-B/32,44.57,42.72,45.21,6000,0.08,Few-Shot (10-Shot)
