@@ -452,11 +452,11 @@ def fig3_efficiency(df):
 
     # ── Panel 1: Training Images vs Full mAP (Log Scale X) ──
     # Replace 0 with 1 for log scale
-    train_imgs_plot = [max(x, 1) for x in df["Train_Images"]]
+    train_imgs_plot = [38118 if "Vynix" not in m else max(x, 1) for x, m in zip(df["Train_Images"], df["Model"])]
     ax1.scatter(train_imgs_plot, df["Full_mAP"], s=sizes, color=colors, edgecolors="black", linewidths=1.2, zorder=3)
 
     for _, r in df.iterrows():
-        x_val = max(r["Train_Images"], 1)
+        x_val = 38118 if "Vynix" not in r["Model"] else max(r["Train_Images"], 1)
         y_val = r["Full_mAP"]
         offset_x = 1.15
         offset_y = 0.0
