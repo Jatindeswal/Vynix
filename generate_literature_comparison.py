@@ -246,7 +246,7 @@ LITERATURE_DATA = [
         "Full_mAP": 22.17,
         "Rare_mAP": 18.57,
         "NonRare_mAP": 23.42,
-        "Train_Images": 38118,
+        "Train_Images": 0,
         "GPU_Hours": 0.0,
         "Supervision": "Zero-Shot (No Training)",
     },
@@ -259,7 +259,7 @@ LITERATURE_DATA = [
         "Full_mAP": 31.42,
         "Rare_mAP": 28.97,
         "NonRare_mAP": 32.27,
-        "Train_Images": 38118,
+        "Train_Images": 600,
         "GPU_Hours": 0.025,
         "Supervision": "Few-Shot (1-Shot)",
     },
@@ -272,11 +272,11 @@ LITERATURE_DATA = [
         "Full_mAP": 38.82,
         "Rare_mAP": 36.77,
         "NonRare_mAP": 39.53,
-        "Train_Images": 38118,
+        "Train_Images": 3000,
         "GPU_Hours": 0.05,
         "Supervision": "Few-Shot (5-Shot)",
     },
-    {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 38118, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
+    {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 6000, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
 ]
 
 
