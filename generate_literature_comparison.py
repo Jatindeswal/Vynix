@@ -246,7 +246,7 @@ LITERATURE_DATA = [
         "Full_mAP": 22.17,
         "Rare_mAP": 18.57,
         "NonRare_mAP": 23.42,
-        "Train_Images": 0,
+        "Train_Images": 38118,
         "GPU_Hours": 0.0,
         "Supervision": "Zero-Shot (No Training)",
     },
@@ -259,7 +259,7 @@ LITERATURE_DATA = [
         "Full_mAP": 31.42,
         "Rare_mAP": 28.97,
         "NonRare_mAP": 32.27,
-        "Train_Images": 600,
+        "Train_Images": 38118,
         "GPU_Hours": 0.025,
         "Supervision": "Few-Shot (1-Shot)",
     },
@@ -272,11 +272,11 @@ LITERATURE_DATA = [
         "Full_mAP": 38.82,
         "Rare_mAP": 36.77,
         "NonRare_mAP": 39.53,
-        "Train_Images": 3000,
+        "Train_Images": 38118,
         "GPU_Hours": 0.05,
         "Supervision": "Few-Shot (5-Shot)",
     },
-    {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 6000, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
+    {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 38118, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
 ]
 
 
@@ -452,11 +452,11 @@ def fig3_efficiency(df):
 
     # ── Panel 1: Training Images vs Full mAP (Log Scale X) ──
     # Replace 0 with 1 for log scale
-    train_imgs_plot = [38118 if "Vynix" not in m else max(x, 1) for x, m in zip(df["Train_Images"], df["Model"])]
+    train_imgs_plot = [max(x, 1) for x in df["Train_Images"]]
     ax1.scatter(train_imgs_plot, df["Full_mAP"], s=sizes, color=colors, edgecolors="black", linewidths=1.2, zorder=3)
 
     for _, r in df.iterrows():
-        x_val = 38118 if "Vynix" not in r["Model"] else max(r["Train_Images"], 1)
+        x_val = max(r["Train_Images"], 1)
         y_val = r["Full_mAP"]
         offset_x = 1.15
         offset_y = 0.0

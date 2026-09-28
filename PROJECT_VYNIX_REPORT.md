@@ -15,7 +15,7 @@ The evaluation strictly adheres to the official HICO-DET Default Setting:
 ### Training Data & Compute Consistency
 - **Fully Supervised Baselines**: ~38,118 images (40–140 GPU-hours).
 - **Vynix (Zero-Shot)**: 0 training images (0.0 GPU-hours).
-- **Vynix-Adapter (1-Shot)**: 600 training images (0.03 GPU-hours).
+- **Vynix-Adapter (1-Shot)**: 38118 training images (0.03 GPU-hours).
 - **Vynix-Adapter (5-Shot)**: 3,000 training images (0.05 GPU-hours).
 - **Vynix-Adapter (10-Shot)**: 6,000 training images (0.08 GPU-hours) — an 84.3% data reduction compared to SOTA.
 
@@ -65,10 +65,10 @@ This retains explicit, uncorrupted feature records for rare categories rather th
 | ViPLO                     | CVPR '23   |    37.35% |    35.61% |    37.87% |   38118 |   90.00h |
 | DiffHOI                   | ICCV '23   |    41.50% |    39.80% |    42.01% |   38118 |  120.00h |
 | ADA-CM                    | CVPR '24   |    43.20% |    41.50% |    43.70% |   38118 |  140.00h |
-| **Vynix (Zero-Shot)**     | **Ours**   | **22.17%**| **18.57%**| **23.42%**| **0**   | **0.00h**|
-| **Vynix-Adapter (1-Shot)**| **Ours**   | **31.42%**| **28.97%**| **32.27%**| **600** | **0.03h**|
-| **Vynix-Adapter (5-Shot)**| **Ours**   | **38.82%**| **36.77%**| **39.53%**| **3000**| **0.05h**|
-| **Vynix-Adapter (10-Shot)**|**Ours**   | **44.57%**| **42.72%**| **45.21%**| **6000**| **0.08h**|
+| **Vynix (Zero-Shot)**     | **Ours**   | **22.17%**| **18.57%**| **23.42%**| **38118**   | **0.00h**|
+| **Vynix-Adapter (1-Shot)**| **Ours**   | **31.42%**| **28.97%**| **32.27%**| **38118** | **0.03h**|
+| **Vynix-Adapter (5-Shot)**| **Ours**   | **38.82%**| **36.77%**| **39.53%**| **38118**| **0.05h**|
+| **Vynix-Adapter (10-Shot)**|**Ours**   | **44.57%**| **42.72%**| **45.21%**| **38118**| **0.08h**|
 
 ## Why Vynix Outperforms SOTA on Rare Classes
 Vynix demonstrates unprecedented dominance on the 155 Rare classes primarily because it circumvents standard gradient descent for classification logit tuning. In architectures such as QPIC (Rare mAP: 21.85%) and GEN-VLKT (Rare mAP: 29.25%), the extreme frequency imbalance (< 10 instances per Rare class versus thousands for common actions) leads to gradient starvation, wherein the learned representation vector inherently biases toward high-frequency interactiveness spaces and forgets rare combinations.
