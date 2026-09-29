@@ -277,6 +277,7 @@ LITERATURE_DATA = [
         "Supervision": "Few-Shot (5-Shot)",
     },
     {"Model": "Vynix-Adapter (10-Shot)", "Year": 2026, "Venue": "Ours (10-Shot)", "Type": "3-Stream Spatial Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 44.57, "Rare_mAP": 42.72, "NonRare_mAP": 45.21, "Train_Images": 6000, "GPU_Hours": 0.08, "Supervision": "Few-Shot (10-Shot)"},
+    {"Model": "Vynix-Full (Trained)", "Year": 2026, "Venue": "Ours (Full)", "Type": "Full Shard Cache + Adapter", "Backbone": "YOLOv8n + CLIP ViT-B/32", "Full_mAP": 22.03, "Rare_mAP": 23.32, "NonRare_mAP": 21.59, "Train_Images": 38118, "GPU_Hours": 0.72, "Supervision": "Full Dataset Cache"},
 ]
 
 
@@ -326,9 +327,9 @@ def fig1_timeline(df):
         )
 
     # Plot Vynix variants (Ours)
-    vynix_years = [2024.2, 2024.4, 2024.6, 2024.8]
-    colors_vynix = ["#f39c12", "#e67e22", "#27ae60", "#2ecc71"]
-    markers_vynix = ["D", "s", "^", "*"]
+    vynix_years = [2024.1, 2024.3, 2024.5, 2024.7, 2024.9]
+    colors_vynix = ["#f39c12", "#e67e22", "#27ae60", "#2ecc71", "#1abc9c"]
+    markers_vynix = ["D", "s", "^", "*", "P"]
 
     for i, (_, r) in enumerate(vynix.iterrows()):
         yr = vynix_years[i]
