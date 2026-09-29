@@ -232,15 +232,25 @@ def main():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit training images for testing")
     parser.add_argument("--max-shots", type=int, default=50, help="Max exemplars per class (0 for unlimited)")
+    parser.add_argument("--detector-model", type=str, default="yolov8m.pt", help="YOLO detector model (e.g. yolov8m.pt, yolov8l.pt, yolov8n.pt)")
+    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch32", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch32, openai/clip-vit-base-patch16)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
     print("===========================================================================")
     print("  PROJECT VYNIX — FULL DATASET TRAINING PIPELINE")
     print("===========================================================================")
+    print(f"  Detector: {args.detector_model}")
+    print(f"  CLIP Backbone: {args.clip_model}")
 
     meta = HOIMeta(args.dataset_dir)
-    extractor = MultiStreamFeatureExtractor(device=args.device, detector_conf=0.08, use_3stream=True)
+    extractor = MultiStreamFeatureExtractor(
+        device=args.device,
+        detector_conf=0.08,
+        use_3stream=True,
+        detector_model=args.detector_model,
+        clip_model=args.clip_model
+    )
     text_weights = extractor.build_text_weights(meta)
 
     train_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "train-*.parquet")))

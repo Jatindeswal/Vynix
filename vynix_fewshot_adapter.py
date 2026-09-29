@@ -252,24 +252,25 @@ class MultiStreamFeatureExtractor:
     - Union crop (contextual interaction)
     """
 
-    def __init__(self, device: str, detector_conf: float = 0.08, use_3stream: bool = True, detector_model: str = "yolov8m.pt"):
+    def __init__(self, device: str, detector_conf: float = 0.08, use_3stream: bool = True, detector_model: str = "yolov8m.pt", clip_model: str = "openai/clip-vit-base-patch32"):
         self.device = device
         self.detector_conf = detector_conf
         self.use_3stream = use_3stream
         self.feature_dim = 1536 if use_3stream else 512
         self.detector_model_name = detector_model
+        self.clip_model_name = clip_model
 
         print(f"  Loading YOLO detector ({detector_model}, conf={detector_conf})...")
         self.yolo = YOLO(detector_model)
-        print("  Loading CLIP ViT-B/32 (Vision & Text Backbones)...")
+        print(f"  Loading CLIP backbone ({clip_model})...")
         import torchvision.transforms as T
         self.clip_preprocess = T.Compose([
             T.Resize((224, 224), interpolation=T.InterpolationMode.BICUBIC),
             T.ToTensor(),
             T.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
         ])
-        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-        self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
+        self.processor = CLIPProcessor.from_pretrained(clip_model)
+        self.model = CLIPModel.from_pretrained(clip_model).to(device).eval()
 
     @staticmethod
     def _safe_extract(feats):

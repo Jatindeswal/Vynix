@@ -156,6 +156,7 @@ def main():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit test images for testing")
     parser.add_argument("--detector-model", type=str, default="yolov8m.pt", help="YOLO detector model (e.g. yolov8m.pt, yolov8l.pt, yolov8n.pt)")
+    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch32", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch32, openai/clip-vit-base-patch16)")
     args = parser.parse_args()
 
     print("===========================================================================")
@@ -163,13 +164,15 @@ def main():
     print("===========================================================================")
     print(f"  Device: {args.device}")
     print(f"  Detector: {args.detector_model}")
+    print(f"  CLIP Backbone: {args.clip_model}")
 
     meta = HOIMeta(args.dataset_dir)
     extractor = MultiStreamFeatureExtractor(
         device=args.device,
         detector_conf=0.08,
         use_3stream=True,
-        detector_model=args.detector_model
+        detector_model=args.detector_model,
+        clip_model=args.clip_model
     )
     text_weights = extractor.build_text_weights(meta)
 
