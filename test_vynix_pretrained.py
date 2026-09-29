@@ -1,0 +1,188 @@
+import os
+import argparse
+import glob
+import torch
+from tqdm import tqdm
+import pandas as pd
+import io
+from PIL import Image
+
+# Import existing core components
+from vynix_fewshot_adapter import (
+    HOIMeta,
+    MultiStreamFeatureExtractor,
+    Vynix3StreamAdapter,
+    CONTACT_VERBS,
+    compute_iou,
+    compute_union_box,
+    compute_spatial_vector,
+    normalize_name,
+    COCO_CLASSES,
+    parse_int_list,
+    compute_ap
+)
+import numpy as np
+
+def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, device, eval_limit=None):
+    extractor.yolo.to(device).eval()
+    adapter.to(device).eval()
+    text_weights_dev = text_weights.to(device)
+
+    print("\n  [Evaluation] Loading Test Parquet files...")
+    dfs = [pd.read_parquet(f) for f in test_files]
+    test_df = pd.concat(dfs, ignore_index=True)
+    if eval_limit:
+        test_df = test_df.iloc[:eval_limit]
+
+    n_images = len(test_df)
+    print(f"  [Evaluation] Running inference on {n_images} images...")
+
+    all_preds = {}
+    all_gt = {}
+    total_vetoes = 0
+
+    for img_idx in tqdm(range(n_images), desc="  Evaluating", unit="img"):
+        row = test_df.iloc[img_idx]
+        all_gt[img_idx] = set(parse_int_list(str(row.get("positive_objects", ""))))
+
+        img_data = row["image"]
+        if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
+            pil_img = Image.open(io.BytesIO(img_data["bytes"]))
+        elif isinstance(img_data, Image.Image):
+            pil_img = img_data
+        else:
+            continue
+        if pil_img.mode != "RGB":
+            pil_img = pil_img.convert("RGB")
+
+        persons, objects = extractor.detect(pil_img)
+        if not persons or not objects:
+            all_preds[img_idx] = {}
+            continue
+
+        img_w, img_h = pil_img.size
+        preds = {}
+
+        pairs = [(p, o) for p in persons for o in objects]
+        if len(pairs) > 50:
+            pairs.sort(key=lambda x: x[0][1] * x[1][1], reverse=True)
+            pairs = pairs[:50]
+
+        for (p_box, p_conf), (o_box, o_conf, o_cls) in pairs:
+            iou_val = compute_iou(p_box, o_box)
+            coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
+            if not coco_name:
+                continue
+            hico_name = normalize_name(coco_name)
+            entries = meta.obj_to_entries.get(hico_name, [])
+            if not entries:
+                continue
+
+            u_box = compute_union_box(p_box, o_box)
+            f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box).unsqueeze(0).to(device)
+            s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h).unsqueeze(0).to(device)
+
+            f_union = f_fused[:, 1024:1536] if f_fused.shape[-1] == 1536 else f_fused
+
+            with torch.no_grad():
+                clip_logits = f_union @ text_weights_dev.T
+                final_logits = adapter(clip_logits, f_fused, s_vec)
+                probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
+
+            for verb, _, hoi_id in entries:
+                raw_prob = probs[hoi_id].item()
+
+                if verb in CONTACT_VERBS and iou_val == 0.0:
+                    gated_prob = 0.0
+                    total_vetoes += 1
+                else:
+                    gated_prob = raw_prob
+
+                conf = p_conf * o_conf * gated_prob
+                if hoi_id not in preds or conf > preds[hoi_id]:
+                    preds[hoi_id] = conf
+
+        all_preds[img_idx] = preds
+
+    all_hoi_ids = sorted(meta.hoi_to_obj.keys())
+    per_class_ap = {}
+    for hoi_id in all_hoi_ids:
+        scores = [all_preds.get(i, {}).get(hoi_id, 0.0) for i in range(n_images)]
+        labels = [1 if hoi_id in all_gt.get(i, set()) else 0 for i in range(n_images)]
+        per_class_ap[hoi_id] = compute_ap(scores, labels)
+
+    full_aps = [per_class_ap[h] for h in all_hoi_ids]
+    rare_ids = {h for h in range(meta.num_classes) if h % 4 == 0} # Using identical pseudo-rare split logic from vynix_fewshot_adapter for consistency
+    nonrare_ids = set(range(meta.num_classes)) - rare_ids
+    rare_aps = [per_class_ap[h] for h in rare_ids if h in per_class_ap]
+    nonrare_aps = [per_class_ap[h] for h in nonrare_ids if h in per_class_ap]
+
+    return {
+        "mAP_full": float(np.mean(full_aps)) * 100,
+        "mAP_rare": float(np.mean(rare_aps)) * 100 if rare_aps else 0.0,
+        "mAP_non_rare": float(np.mean(nonrare_aps)) * 100 if nonrare_aps else 0.0,
+        "vetoes": total_vetoes,
+        "n_images": n_images,
+        "per_class_ap": per_class_ap,
+    }
+
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate Project Vynix Pretrained Model")
+    parser.add_argument("--dataset-dir", type=str, default="/app")
+    parser.add_argument("--model-dir", type=str, default="saved_models")
+    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--limit", type=int, default=None, help="Limit test images for testing")
+    args = parser.parse_args()
+
+    print("===========================================================================")
+    print("  PROJECT VYNIX — PRETRAINED MODEL EVALUATION")
+    print("===========================================================================")
+    print(f"  Device: {args.device}")
+
+    meta = HOIMeta(args.dataset_dir)
+    extractor = MultiStreamFeatureExtractor(device=args.device, detector_conf=0.08, use_3stream=True)
+    text_weights = extractor.build_text_weights(meta)
+
+    # 1. Load the Cache
+    cache_path = os.path.join(args.model_dir, "vynix_full_cache.pt")
+    if not os.path.exists(cache_path):
+        print(f"Error: Cache not found at {cache_path}. Run train_vynix_full.py first.")
+        return
+
+    print(f"\n  Loading cache from {cache_path}...")
+    cache_data = torch.load(cache_path, map_location=args.device)
+    cache_keys = cache_data["cache_keys"]
+    cache_values = cache_data["cache_values"]
+
+    # 2. Instantiate and Load the Model
+    adapter = Vynix3StreamAdapter(
+        cache_keys=cache_keys,
+        cache_values=cache_values,
+        use_spatial_mlp=True,
+        num_classes=meta.num_classes
+    )
+
+    model_path = os.path.join(args.model_dir, "vynix_full_model.pth")
+    if not os.path.exists(model_path):
+        print(f"Error: Model weights not found at {model_path}. Run train_vynix_full.py first.")
+        return
+
+    print(f"  Loading model weights from {model_path}...")
+    adapter.load_state_dict(torch.load(model_path, map_location=args.device))
+
+    test_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "test-*.parquet")))
+
+    # 3. Evaluate
+    res = evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, args.device, eval_limit=args.limit)
+
+    print("\n===========================================================================")
+    print("  🏆 FINAL PRETRAINED MODEL EVALUATION RESULTS")
+    print("===========================================================================")
+    print(f"  Full mAP       : {res['mAP_full']:>6.2f}%")
+    print(f"  Rare mAP       : {res['mAP_rare']:>6.2f}%")
+    print(f"  Non-Rare mAP   : {res['mAP_non_rare']:>6.2f}%")
+    print(f"  Vetoes Triggered: {res['vetoes']}")
+    print("===========================================================================")
+
+if __name__ == "__main__":
+    main()
