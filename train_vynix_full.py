@@ -95,6 +95,9 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
                 if not candidate_pairs:
                     continue
 
+                if len(candidate_pairs) > 20:
+                    candidate_pairs = candidate_pairs[:20]
+
                 # Batched visual feature extraction for all positive pairs in this image
                 boxes_to_extract = [(p, o, u) for (p, o, u, _, _) in candidate_pairs]
                 f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract)

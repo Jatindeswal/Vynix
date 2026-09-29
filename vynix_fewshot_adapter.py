@@ -238,6 +238,12 @@ class MultiStreamFeatureExtractor:
         print(f"  Loading YOLOv8-nano (Confidence threshold = {detector_conf})...")
         self.yolo = YOLO("yolov8n.pt")
         print("  Loading CLIP ViT-B/32 (Vision & Text Backbones)...")
+        import torchvision.transforms as T
+        self.clip_preprocess = T.Compose([
+            T.Resize((224, 224), interpolation=T.InterpolationMode.BICUBIC),
+            T.ToTensor(),
+            T.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
+        ])
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
 
@@ -254,12 +260,12 @@ class MultiStreamFeatureExtractor:
         return feats
 
     @torch.no_grad()
-    def _encode_crops_batch(self, pil_crops: List[Image.Image], max_batch: int = 64) -> torch.Tensor:
+    def _encode_crops_batch(self, pil_crops: List[Image.Image], max_batch: int = 32) -> torch.Tensor:
         """
-        Batched CLIP image encoding for high throughput.
+        Batched CLIP image encoding using torchvision transforms for high throughput and low RAM footprint.
         Args:
             pil_crops: list of PIL Images
-            max_batch: chunk size to prevent VRAM spikes
+            max_batch: chunk size to prevent VRAM spikes (32 is optimal for 4GB VRAM)
         Returns:
             (N, 512) tensor on CPU
         """
@@ -268,10 +274,10 @@ class MultiStreamFeatureExtractor:
 
         all_feats = []
         for i in range(0, len(pil_crops), max_batch):
-            batch = pil_crops[i : i + max_batch]
-            inputs = self.processor(images=batch, return_tensors="pt")
-            inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            feats = self._safe_extract(self.model.get_image_features(**inputs))
+            batch_crops = pil_crops[i : i + max_batch]
+            batch_tensors = torch.stack([self.clip_preprocess(crop) for crop in batch_crops]).to(self.device)
+            out = self.model.get_image_features(pixel_values=batch_tensors)
+            feats = self._safe_extract(out)
             feats = feats / feats.norm(dim=-1, keepdim=True)
             all_feats.append(feats.cpu())
 
