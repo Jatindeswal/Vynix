@@ -21,26 +21,44 @@ from vynix_fewshot_adapter import (
     parse_int_list
 )
 
-def build_full_dataset_cache(train_files, meta, extractor, device, max_images=None):
+def build_full_dataset_cache(train_files, meta, extractor, device, output_dir="saved_models", max_images=None, max_shots_per_class=50):
     """
-    Extracts visual features, labels, and spatial geometry from the training set via streaming.
+    Extracts visual features, labels, and spatial geometry from the training set via incremental shard streaming.
+    Saves each shard directly to disk (cache_shard_XX.pt) to guarantee zero RAM leaks.
     """
     import pyarrow.parquet as pq
     import gc
+    import numpy as np
 
     total_available = sum(pq.read_metadata(f).num_rows for f in train_files)
     n_target = min(total_available, max_images) if max_images else total_available
     print(f"\n  [Extraction] Indexed {total_available} images across {len(train_files)} shards. Target: {n_target} images.")
 
-    cache_keys_list = []
-    cache_values_list = []
-    spatial_vecs_list = []
-
+    os.makedirs(output_dir, exist_ok=True)
     extractor.yolo.to(device)
     processed_count = 0
+    class_counts = np.zeros(meta.num_classes, dtype=np.int32)
+
+    shard_files = []
 
     with tqdm(total=n_target, desc="  Extracting Features", unit="img") as pbar:
-        for f in train_files:
+        for shard_idx, f in enumerate(train_files):
+            shard_path = os.path.join(output_dir, f"cache_shard_{shard_idx:02d}.pt")
+
+            # Resume existing shard if already computed
+            if os.path.exists(shard_path):
+                data = torch.load(shard_path, map_location="cpu", weights_only=True)
+                print(f"\n  [Resume] Shard {shard_idx:02d} already computed ({data['keys'].shape[0]} entries). Skipping.")
+                shard_files.append(shard_path)
+                num_shard_rows = pq.read_metadata(f).num_rows
+                pbar.update(num_shard_rows)
+                processed_count += num_shard_rows
+                continue
+
+            shard_keys_list = []
+            shard_values_list = []
+            shard_spatials_list = []
+
             df = pd.read_parquet(f)
             for _, row in df.iterrows():
                 if max_images and processed_count >= max_images:
@@ -54,6 +72,12 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
 
                 pos_list = parse_int_list(pos_str)
                 pos_set = set(pos_list)
+
+                # Exemplar balancing: check if all classes in this image are already saturated
+                if max_shots_per_class:
+                    needed = [hid for hid in pos_set if hid < meta.num_classes and class_counts[hid] < max_shots_per_class]
+                    if not needed:
+                        continue
 
                 img_data = row["image"]
                 if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
@@ -88,6 +112,13 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
                         if not rel_ids:
                             continue
 
+                        # Check exemplar budget
+                        if max_shots_per_class:
+                            rel_ids_needed = [hid for hid in rel_ids if class_counts[hid] < max_shots_per_class]
+                            if not rel_ids_needed:
+                                continue
+                            rel_ids = rel_ids_needed
+
                         u_box = compute_union_box(p_box, o_box)
                         s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
                         candidate_pairs.append((p_box, o_box, u_box, rel_ids, s_vec))
@@ -106,22 +137,51 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
                     label = torch.zeros(meta.num_classes)
                     for hid in rel_ids:
                         label[hid] = 1.0
+                        class_counts[hid] += 1
 
-                    cache_keys_list.append(f_fused_batch[idx].cpu())
-                    cache_values_list.append(label.cpu())
-                    spatial_vecs_list.append(s_vec.cpu())
+                    shard_keys_list.append(f_fused_batch[idx].cpu())
+                    shard_values_list.append(label.cpu())
+                    shard_spatials_list.append(s_vec.cpu())
 
             del df
             gc.collect()
+
+            # Save this shard immediately to disk to free RAM
+            if shard_keys_list:
+                s_keys = torch.cat([k.view(1, -1) for k in shard_keys_list], dim=0)
+                s_values = torch.stack(shard_values_list)
+                s_spatials = torch.stack(shard_spatials_list)
+                torch.save({
+                    "keys": s_keys,
+                    "values": s_values,
+                    "spatials": s_spatials
+                }, shard_path)
+                shard_files.append(shard_path)
+                print(f"\n  ✓ Saved Shard {shard_idx:02d}: {s_keys.shape[0]} entries to {shard_path}")
+
+            del shard_keys_list, shard_values_list, shard_spatials_list
+            gc.collect()
+
             if max_images and processed_count >= max_images:
                 break
 
-    if not cache_keys_list:
+    if not shard_files:
         raise ValueError("Failed to extract any features. Check dataset or YOLO confidence.")
 
-    cache_keys = torch.cat([k.view(1, -1) for k in cache_keys_list], dim=0)    # (M, 1536)
-    cache_values = torch.stack(cache_values_list)     # (M, 600)
-    cache_spatials = torch.stack(spatial_vecs_list)   # (M, 8)
+    # Combine all saved shards
+    print("\n  [Aggregation] Loading and merging saved shard caches...")
+    all_keys = []
+    all_values = []
+    all_spatials = []
+    for sf in shard_files:
+        data = torch.load(sf, map_location="cpu", weights_only=True)
+        all_keys.append(data["keys"])
+        all_values.append(data["values"])
+        all_spatials.append(data["spatials"])
+
+    cache_keys = torch.cat(all_keys, dim=0)
+    cache_values = torch.cat(all_values, dim=0)
+    cache_spatials = torch.cat(all_spatials, dim=0)
 
     cache_keys = nn.functional.normalize(cache_keys, dim=1)
     print(f"  [OK] Full Cache built: {cache_keys.shape[0]} entries x {cache_keys.shape[1]}-d visual features")
@@ -171,6 +231,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit training images for testing")
+    parser.add_argument("--max-shots", type=int, default=50, help="Max exemplars per class (0 for unlimited)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -183,8 +244,12 @@ def main():
     text_weights = extractor.build_text_weights(meta)
 
     train_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "train-*.parquet")))
+    max_shots = args.max_shots if args.max_shots > 0 else None
     cache_keys, cache_values, cache_spatials = build_full_dataset_cache(
-        train_files, meta, extractor, args.device, max_images=args.limit
+        train_files, meta, extractor, args.device,
+        output_dir=args.output_dir,
+        max_images=args.limit,
+        max_shots_per_class=max_shots
     )
 
     cache_path = os.path.join(args.output_dir, "vynix_full_cache.pt")
