@@ -72,6 +72,7 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
 
                 img_w, img_h = pil_img.size
 
+                candidate_pairs = []
                 for (p_box, p_conf) in persons:
                     for (o_box, o_conf, o_cls) in objects:
                         coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
@@ -88,16 +89,24 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
                             continue
 
                         u_box = compute_union_box(p_box, o_box)
-                        f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box)
                         s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
+                        candidate_pairs.append((p_box, o_box, u_box, rel_ids, s_vec))
 
-                        label = torch.zeros(meta.num_classes)
-                        for hid in rel_ids:
-                            label[hid] = 1.0
+                if not candidate_pairs:
+                    continue
 
-                        cache_keys_list.append(f_fused.cpu())
-                        cache_values_list.append(label.cpu())
-                        spatial_vecs_list.append(s_vec.cpu())
+                # Batched visual feature extraction for all positive pairs in this image
+                boxes_to_extract = [(p, o, u) for (p, o, u, _, _) in candidate_pairs]
+                f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract)
+
+                for idx, (_, _, _, rel_ids, s_vec) in enumerate(candidate_pairs):
+                    label = torch.zeros(meta.num_classes)
+                    for hid in rel_ids:
+                        label[hid] = 1.0
+
+                    cache_keys_list.append(f_fused_batch[idx].cpu())
+                    cache_values_list.append(label.cpu())
+                    spatial_vecs_list.append(s_vec.cpu())
 
             del df
             gc.collect()

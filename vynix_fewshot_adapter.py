@@ -254,12 +254,73 @@ class MultiStreamFeatureExtractor:
         return feats
 
     @torch.no_grad()
+    def _encode_crops_batch(self, pil_crops: List[Image.Image], max_batch: int = 64) -> torch.Tensor:
+        """
+        Batched CLIP image encoding for high throughput.
+        Args:
+            pil_crops: list of PIL Images
+            max_batch: chunk size to prevent VRAM spikes
+        Returns:
+            (N, 512) tensor on CPU
+        """
+        if not pil_crops:
+            return torch.empty(0, 512)
+
+        all_feats = []
+        for i in range(0, len(pil_crops), max_batch):
+            batch = pil_crops[i : i + max_batch]
+            inputs = self.processor(images=batch, return_tensors="pt")
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
+            feats = self._safe_extract(self.model.get_image_features(**inputs))
+            feats = feats / feats.norm(dim=-1, keepdim=True)
+            all_feats.append(feats.cpu())
+
+        return torch.cat(all_feats, dim=0)
+
+    @torch.no_grad()
     def _encode_crop(self, pil_crop: Image.Image) -> torch.Tensor:
-        inputs = self.processor(images=pil_crop, return_tensors="pt")
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        feat = self._safe_extract(self.model.get_image_features(**inputs))
-        feat = feat / feat.norm(dim=-1, keepdim=True)
-        return feat.squeeze(0).cpu()  # (512,)
+        feats = self._encode_crops_batch([pil_crop], max_batch=1)
+        return feats.squeeze(0)
+
+    def extract_visual_features_batch(
+        self, pil_img: Image.Image, boxes_list: List[Tuple[List[float], List[float], List[float]]]
+    ) -> torch.Tensor:
+        """
+        Batched extraction of 3-stream visual representations for multiple pairs.
+        Args:
+            boxes_list: list of (p_box, o_box, u_box)
+        Returns:
+            (K, 1536) if use_3stream else (K, 512)
+        """
+        if not boxes_list:
+            return torch.empty(0, self.feature_dim)
+
+        img_w, img_h = pil_img.size
+
+        def safe_crop(b):
+            x1 = max(0, min(int(b[0]), img_w - 2))
+            y1 = max(0, min(int(b[1]), img_h - 2))
+            x2 = max(x1 + 2, min(int(b[2]), img_w))
+            y2 = max(y1 + 2, min(int(b[3]), img_h))
+            return pil_img.crop((x1, y1, x2, y2))
+
+        if not self.use_3stream:
+            u_crops = [safe_crop(b[2]) for b in boxes_list]
+            return self._encode_crops_batch(u_crops)
+
+        all_crops = []
+        for p_box, o_box, u_box in boxes_list:
+            all_crops.append(safe_crop(p_box))
+            all_crops.append(safe_crop(o_box))
+            all_crops.append(safe_crop(u_box))
+
+        encoded = self._encode_crops_batch(all_crops)  # (3*K, 512)
+        p_feats = encoded[0::3]  # (K, 512)
+        o_feats = encoded[1::3]  # (K, 512)
+        u_feats = encoded[2::3]  # (K, 512)
+
+        f_fused = torch.cat([p_feats, o_feats, u_feats], dim=-1)  # (K, 1536)
+        return f_fused / f_fused.norm(dim=-1, keepdim=True)
 
     def extract_visual_feature(
         self, pil_img: Image.Image, p_box: List[float], o_box: List[float], u_box: List[float]
@@ -269,31 +330,8 @@ class MultiStreamFeatureExtractor:
         Returns:
             (1536,) if use_3stream=True else (512,)
         """
-        img_w, img_h = pil_img.size
-
-        # Clamp boxes safely
-        def safe_crop(b):
-            x1 = max(0, min(int(b[0]), img_w - 2))
-            y1 = max(0, min(int(b[1]), img_h - 2))
-            x2 = max(x1 + 2, min(int(b[2]), img_w))
-            y2 = max(y1 + 2, min(int(b[3]), img_h))
-            return pil_img.crop((x1, y1, x2, y2))
-
-        u_crop = safe_crop(u_box)
-        f_union = self._encode_crop(u_crop)
-
-        if not self.use_3stream:
-            return f_union
-
-        p_crop = safe_crop(p_box)
-        o_crop = safe_crop(o_box)
-
-        f_person = self._encode_crop(p_crop)
-        f_object = self._encode_crop(o_crop)
-
-        # Concatenate 3 normalized streams
-        f_fused = torch.cat([f_person, f_object, f_union], dim=-1)
-        return f_fused / f_fused.norm(dim=-1, keepdim=True)
+        feats = self.extract_visual_features_batch(pil_img, [(p_box, o_box, u_box)])
+        return feats.squeeze(0)
 
     def detect(self, pil_image: Image.Image):
         """Returns detected (persons, objects) with lower threshold for high recall."""

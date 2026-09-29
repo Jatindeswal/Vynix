@@ -75,8 +75,8 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                     pairs.sort(key=lambda x: x[0][1] * x[1][1], reverse=True)
                     pairs = pairs[:50]
 
+                valid_pairs = []
                 for (p_box, p_conf), (o_box, o_conf, o_cls) in pairs:
-                    iou_val = compute_iou(p_box, o_box)
                     coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
                     if not coco_name:
                         continue
@@ -86,18 +86,27 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                         continue
 
                     u_box = compute_union_box(p_box, o_box)
-                    f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box).unsqueeze(0).to(device)
-                    s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h).unsqueeze(0).to(device)
+                    s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
+                    iou_val = compute_iou(p_box, o_box)
+                    valid_pairs.append((p_box, p_conf, o_box, o_conf, u_box, s_vec, iou_val, entries))
 
-                    f_union = f_fused[:, 1024:1536] if f_fused.shape[-1] == 1536 else f_fused
+                if not valid_pairs:
+                    all_preds[img_idx] = {}
+                    continue
 
-                    with torch.no_grad():
-                        clip_logits = f_union @ text_weights_dev.T
-                        final_logits = adapter(clip_logits, f_fused, s_vec)
-                        probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
+                boxes_to_extract = [(p, o, u) for (p, _, o, _, u, _, _, _) in valid_pairs]
+                f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract).to(device)
+                s_vecs_batch = torch.stack([s for (_, _, _, _, _, s, _, _) in valid_pairs]).to(device)
 
+                f_unions = f_fused_batch[:, 1024:1536] if f_fused_batch.shape[-1] == 1536 else f_fused_batch
+                with torch.no_grad():
+                    clip_logits = f_unions @ text_weights_dev.T
+                    final_logits = adapter(clip_logits, f_fused_batch, s_vecs_batch)
+                    probs_batch = torch.softmax(final_logits, dim=1).cpu()
+
+                for k_idx, (_, p_conf, _, o_conf, _, _, iou_val, entries) in enumerate(valid_pairs):
                     for verb, _, hoi_id in entries:
-                        raw_prob = probs[hoi_id].item()
+                        raw_prob = probs_batch[k_idx, hoi_id].item()
 
                         if verb in CONTACT_VERBS and iou_val == 0.0:
                             gated_prob = 0.0
