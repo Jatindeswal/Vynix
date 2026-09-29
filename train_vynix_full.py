@@ -23,79 +23,86 @@ from vynix_fewshot_adapter import (
 
 def build_full_dataset_cache(train_files, meta, extractor, device, max_images=None):
     """
-    Extracts visual features, labels, and spatial geometry from the ENTIRE training set.
+    Extracts visual features, labels, and spatial geometry from the training set via streaming.
     """
-    print("\n  [Extraction] Loading Train Parquet files...")
-    dfs = [pd.read_parquet(f) for f in train_files]
-    train_df = pd.concat(dfs, ignore_index=True)
-    if max_images:
-        train_df = train_df.iloc[:max_images]
-        print(f"  [Extraction] Limited to {max_images} images for testing.")
+    import pyarrow.parquet as pq
+    import gc
 
-    n_images = len(train_df)
-    print(f"  [Extraction] Indexed {n_images} training images. Starting feature extraction...")
+    total_available = sum(pq.read_metadata(f).num_rows for f in train_files)
+    n_target = min(total_available, max_images) if max_images else total_available
+    print(f"\n  [Extraction] Indexed {total_available} images across {len(train_files)} shards. Target: {n_target} images.")
 
     cache_keys_list = []
     cache_values_list = []
     spatial_vecs_list = []
 
     extractor.yolo.to(device)
+    processed_count = 0
 
+    with tqdm(total=n_target, desc="  Extracting Features", unit="img") as pbar:
+        for f in train_files:
+            df = pd.read_parquet(f)
+            for _, row in df.iterrows():
+                if max_images and processed_count >= max_images:
+                    break
+                processed_count += 1
+                pbar.update(1)
 
-    for img_idx in tqdm(range(n_images), desc="  Extracting Features", unit="img"):
-        row = train_df.iloc[img_idx]
-        pos_str = str(row.get("positive_objects", ""))
-        if not pos_str.strip() or pos_str.lower() == "nan":
-            continue
-
-        pos_list = parse_int_list(pos_str)
-        pos_set = set(pos_list)
-
-        img_data = row["image"]
-        if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
-            pil_img = Image.open(io.BytesIO(img_data["bytes"]))
-        elif isinstance(img_data, Image.Image):
-            pil_img = img_data
-        else:
-            continue
-
-        if pil_img.mode != "RGB":
-            pil_img = pil_img.convert("RGB")
-
-        persons, objects = extractor.detect(pil_img)
-        if not persons or not objects:
-            continue
-
-        img_w, img_h = pil_img.size
-
-        # For every ground truth HOI, try to find a matching (person, object) bounding box pair
-        for (p_box, p_conf) in persons:
-            for (o_box, o_conf, o_cls) in objects:
-                coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
-                if not coco_name:
-                    continue
-                hico_name = normalize_name(coco_name)
-
-                entries = meta.obj_to_entries.get(hico_name, [])
-                if not entries:
+                pos_str = str(row.get("positive_objects", ""))
+                if not pos_str.strip() or pos_str.lower() == "nan":
                     continue
 
-                # Check if this object interaction is in the ground truth
-                rel_ids = [hid for _, _, hid in entries if hid in pos_set]
-                if not rel_ids:
+                pos_list = parse_int_list(pos_str)
+                pos_set = set(pos_list)
+
+                img_data = row["image"]
+                if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
+                    pil_img = Image.open(io.BytesIO(img_data["bytes"]))
+                elif isinstance(img_data, Image.Image):
+                    pil_img = img_data
+                else:
                     continue
 
-                u_box = compute_union_box(p_box, o_box)
-                f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box)
-                s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
+                if pil_img.mode != "RGB":
+                    pil_img = pil_img.convert("RGB")
 
-                label = torch.zeros(meta.num_classes)
-                for hid in rel_ids:
-                    label[hid] = 1.0
+                persons, objects = extractor.detect(pil_img)
+                if not persons or not objects:
+                    continue
 
-                cache_keys_list.append(f_fused.cpu())
-                cache_values_list.append(label.cpu())
-                spatial_vecs_list.append(s_vec.cpu())
+                img_w, img_h = pil_img.size
+
+                for (p_box, p_conf) in persons:
+                    for (o_box, o_conf, o_cls) in objects:
+                        coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
+                        if not coco_name:
+                            continue
+                        hico_name = normalize_name(coco_name)
+
+                        entries = meta.obj_to_entries.get(hico_name, [])
+                        if not entries:
+                            continue
+
+                        rel_ids = [hid for _, _, hid in entries if hid in pos_set]
+                        if not rel_ids:
+                            continue
+
+                        u_box = compute_union_box(p_box, o_box)
+                        f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box)
+                        s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
+
+                        label = torch.zeros(meta.num_classes)
+                        for hid in rel_ids:
+                            label[hid] = 1.0
+
+                        cache_keys_list.append(f_fused.cpu())
+                        cache_values_list.append(label.cpu())
+                        spatial_vecs_list.append(s_vec.cpu())
+
+            del df
+            gc.collect()
+            if max_images and processed_count >= max_images:
+                break
 
     if not cache_keys_list:
         raise ValueError("Failed to extract any features. Check dataset or YOLO confidence.")
@@ -104,10 +111,8 @@ def build_full_dataset_cache(train_files, meta, extractor, device, max_images=No
     cache_values = torch.stack(cache_values_list)     # (M, 600)
     cache_spatials = torch.stack(spatial_vecs_list)   # (M, 8)
 
-    # L2 Normalize keys
     cache_keys = nn.functional.normalize(cache_keys, dim=1)
-
-    print(f"  ✓ Full Cache built: {cache_keys.shape[0]} entries × {cache_keys.shape[1]}-d visual features")
+    print(f"  [OK] Full Cache built: {cache_keys.shape[0]} entries x {cache_keys.shape[1]}-d visual features")
     return cache_keys, cache_values, cache_spatials
 
 def train_adapter_full(adapter, train_features, train_labels, train_spatials, text_weights, epochs=20, device="cuda", lr=1e-3, batch_size=256):

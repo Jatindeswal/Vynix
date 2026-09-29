@@ -24,91 +24,103 @@ from vynix_fewshot_adapter import (
 import numpy as np
 
 def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, device, eval_limit=None):
+    import pyarrow.parquet as pq
+    import gc
+
     extractor.yolo.to(device).eval()
     adapter.to(device).eval()
     text_weights_dev = text_weights.to(device)
 
-    print("\n  [Evaluation] Loading Test Parquet files...")
-    dfs = [pd.read_parquet(f) for f in test_files]
-    test_df = pd.concat(dfs, ignore_index=True)
-    if eval_limit:
-        test_df = test_df.iloc[:eval_limit]
-
-    n_images = len(test_df)
-    print(f"  [Evaluation] Running inference on {n_images} images...")
+    total_available = sum(pq.read_metadata(f).num_rows for f in test_files)
+    n_target = min(total_available, eval_limit) if eval_limit else total_available
+    print(f"\n  [Evaluation] Indexed {total_available} test images across {len(test_files)} shards. Evaluating: {n_target} images...")
 
     all_preds = {}
     all_gt = {}
     total_vetoes = 0
+    processed_count = 0
 
-    for img_idx in tqdm(range(n_images), desc="  Evaluating", unit="img"):
-        row = test_df.iloc[img_idx]
-        all_gt[img_idx] = set(parse_int_list(str(row.get("positive_objects", ""))))
+    with tqdm(total=n_target, desc="  Evaluating", unit="img") as pbar:
+        for f in test_files:
+            df = pd.read_parquet(f)
+            for _, row in df.iterrows():
+                if eval_limit and processed_count >= eval_limit:
+                    break
+                img_idx = processed_count
+                processed_count += 1
+                pbar.update(1)
 
-        img_data = row["image"]
-        if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
-            pil_img = Image.open(io.BytesIO(img_data["bytes"]))
-        elif isinstance(img_data, Image.Image):
-            pil_img = img_data
-        else:
-            continue
-        if pil_img.mode != "RGB":
-            pil_img = pil_img.convert("RGB")
+                all_gt[img_idx] = set(parse_int_list(str(row.get("positive_objects", ""))))
 
-        persons, objects = extractor.detect(pil_img)
-        if not persons or not objects:
-            all_preds[img_idx] = {}
-            continue
-
-        img_w, img_h = pil_img.size
-        preds = {}
-
-        pairs = [(p, o) for p in persons for o in objects]
-        if len(pairs) > 50:
-            pairs.sort(key=lambda x: x[0][1] * x[1][1], reverse=True)
-            pairs = pairs[:50]
-
-        for (p_box, p_conf), (o_box, o_conf, o_cls) in pairs:
-            iou_val = compute_iou(p_box, o_box)
-            coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
-            if not coco_name:
-                continue
-            hico_name = normalize_name(coco_name)
-            entries = meta.obj_to_entries.get(hico_name, [])
-            if not entries:
-                continue
-
-            u_box = compute_union_box(p_box, o_box)
-            f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box).unsqueeze(0).to(device)
-            s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h).unsqueeze(0).to(device)
-
-            f_union = f_fused[:, 1024:1536] if f_fused.shape[-1] == 1536 else f_fused
-
-            with torch.no_grad():
-                clip_logits = f_union @ text_weights_dev.T
-                final_logits = adapter(clip_logits, f_fused, s_vec)
-                probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
-
-            for verb, _, hoi_id in entries:
-                raw_prob = probs[hoi_id].item()
-
-                if verb in CONTACT_VERBS and iou_val == 0.0:
-                    gated_prob = 0.0
-                    total_vetoes += 1
+                img_data = row["image"]
+                if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
+                    pil_img = Image.open(io.BytesIO(img_data["bytes"]))
+                elif isinstance(img_data, Image.Image):
+                    pil_img = img_data
                 else:
-                    gated_prob = raw_prob
+                    continue
+                if pil_img.mode != "RGB":
+                    pil_img = pil_img.convert("RGB")
 
-                conf = p_conf * o_conf * gated_prob
-                if hoi_id not in preds or conf > preds[hoi_id]:
-                    preds[hoi_id] = conf
+                persons, objects = extractor.detect(pil_img)
+                if not persons or not objects:
+                    all_preds[img_idx] = {}
+                    continue
 
-        all_preds[img_idx] = preds
+                img_w, img_h = pil_img.size
+                preds = {}
+
+                pairs = [(p, o) for p in persons for o in objects]
+                if len(pairs) > 50:
+                    pairs.sort(key=lambda x: x[0][1] * x[1][1], reverse=True)
+                    pairs = pairs[:50]
+
+                for (p_box, p_conf), (o_box, o_conf, o_cls) in pairs:
+                    iou_val = compute_iou(p_box, o_box)
+                    coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
+                    if not coco_name:
+                        continue
+                    hico_name = normalize_name(coco_name)
+                    entries = meta.obj_to_entries.get(hico_name, [])
+                    if not entries:
+                        continue
+
+                    u_box = compute_union_box(p_box, o_box)
+                    f_fused = extractor.extract_visual_feature(pil_img, p_box, o_box, u_box).unsqueeze(0).to(device)
+                    s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h).unsqueeze(0).to(device)
+
+                    f_union = f_fused[:, 1024:1536] if f_fused.shape[-1] == 1536 else f_fused
+
+                    with torch.no_grad():
+                        clip_logits = f_union @ text_weights_dev.T
+                        final_logits = adapter(clip_logits, f_fused, s_vec)
+                        probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
+
+                    for verb, _, hoi_id in entries:
+                        raw_prob = probs[hoi_id].item()
+
+                        if verb in CONTACT_VERBS and iou_val == 0.0:
+                            gated_prob = 0.0
+                            total_vetoes += 1
+                        else:
+                            gated_prob = raw_prob
+
+                        conf = p_conf * o_conf * gated_prob
+                        if hoi_id not in preds or conf > preds[hoi_id]:
+                            preds[hoi_id] = conf
+
+                all_preds[img_idx] = preds
+
+            del df
+            gc.collect()
+            if eval_limit and processed_count >= eval_limit:
+                break
 
     all_hoi_ids = sorted(meta.hoi_to_obj.keys())
     per_class_ap = {}
     for hoi_id in all_hoi_ids:
-        scores = [all_preds.get(i, {}).get(hoi_id, 0.0) for i in range(n_images)]
-        labels = [1 if hoi_id in all_gt.get(i, set()) else 0 for i in range(n_images)]
+        scores = [all_preds.get(i, {}).get(hoi_id, 0.0) for i in range(processed_count)]
+        labels = [1 if hoi_id in all_gt.get(i, set()) else 0 for i in range(processed_count)]
         per_class_ap[hoi_id] = compute_ap(scores, labels)
 
     full_aps = [per_class_ap[h] for h in all_hoi_ids]
