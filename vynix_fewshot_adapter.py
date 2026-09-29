@@ -139,6 +139,29 @@ def compute_iou(a: List[float], b: List[float]) -> float:
 def compute_union_box(a: List[float], b: List[float]) -> List[float]:
     return [min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])]
 
+def compute_box_distance(p_box: List[float], o_box: List[float], img_w: int, img_h: int) -> float:
+    """Computes minimum Euclidean distance between two bounding boxes, normalized by image diagonal."""
+    diag = math.sqrt(float(img_w)**2 + float(img_h)**2)
+    dx = max(0.0, max(p_box[0] - o_box[2], o_box[0] - p_box[2]))
+    dy = max(0.0, max(p_box[1] - o_box[3], o_box[1] - p_box[3]))
+    return math.sqrt(dx**2 + dy**2) / max(diag, 1.0)
+
+def compute_soft_geometric_gate(verb: str, iou_val: float, b_dist: float, sigma_contact: float = 0.08) -> float:
+    """
+    Soft Continuous Geometric Veto Gate:
+    - If IoU > 0: direct 2D overlap -> 1.0 (unpenalized)
+    - If IoU == 0 and contact verb: smooth Gaussian decay based on edge distance
+      Adjacent bounding boxes (b_dist ~ 0.01) retain ~0.98 multiplier.
+      Distant hallucinations (b_dist > 0.25) decay towards 0.0.
+    - If non-contact verb: 1.0
+    """
+    if verb in CONTACT_VERBS:
+        if iou_val > 0.0:
+            return 1.0
+        return math.exp(- (b_dist / max(sigma_contact, 1e-4))**2)
+    return 1.0
+
+
 def compute_spatial_vector(p_box: List[float], o_box: List[float], img_w: int, img_h: int) -> torch.Tensor:
     """
     Computes an 8D normalized continuous spatial relationship vector:
@@ -229,14 +252,15 @@ class MultiStreamFeatureExtractor:
     - Union crop (contextual interaction)
     """
 
-    def __init__(self, device: str, detector_conf: float = 0.08, use_3stream: bool = True):
+    def __init__(self, device: str, detector_conf: float = 0.08, use_3stream: bool = True, detector_model: str = "yolov8m.pt"):
         self.device = device
         self.detector_conf = detector_conf
         self.use_3stream = use_3stream
         self.feature_dim = 1536 if use_3stream else 512
+        self.detector_model_name = detector_model
 
-        print(f"  Loading YOLOv8-nano (Confidence threshold = {detector_conf})...")
-        self.yolo = YOLO("yolov8n.pt")
+        print(f"  Loading YOLO detector ({detector_model}, conf={detector_conf})...")
+        self.yolo = YOLO(detector_model)
         print("  Loading CLIP ViT-B/32 (Vision & Text Backbones)...")
         import torchvision.transforms as T
         self.clip_preprocess = T.Compose([
@@ -696,17 +720,16 @@ def evaluate_adapter(
                 final_logits = adapter(clip_logits, f_fused, s_vec)
                 probs = torch.softmax(final_logits, dim=1).squeeze(0).cpu()
 
+            b_dist = compute_box_distance(p_box, o_box, img_w, img_h)
             for verb, _, hoi_id in entries:
                 raw_prob = probs[hoi_id].item()
 
-                # Vynix Geometric Gate
-                if verb in CONTACT_VERBS and iou_val == 0.0:
-                    gated_prob = 0.0
+                # Vynix Soft Geometric Gate
+                gate = compute_soft_geometric_gate(verb, iou_val, b_dist)
+                if gate < 0.05:
                     total_vetoes += 1
-                else:
-                    gated_prob = raw_prob
 
-                conf = p_conf * o_conf * gated_prob
+                conf = p_conf * o_conf * raw_prob * gate
                 if hoi_id not in preds or conf > preds[hoi_id]:
                     preds[hoi_id] = conf
 

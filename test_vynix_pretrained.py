@@ -16,6 +16,8 @@ from vynix_fewshot_adapter import (
     compute_iou,
     compute_union_box,
     compute_spatial_vector,
+    compute_box_distance,
+    compute_soft_geometric_gate,
     normalize_name,
     COCO_CLASSES,
     parse_int_list,
@@ -88,15 +90,16 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                     u_box = compute_union_box(p_box, o_box)
                     s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
                     iou_val = compute_iou(p_box, o_box)
-                    valid_pairs.append((p_box, p_conf, o_box, o_conf, u_box, s_vec, iou_val, entries))
+                    b_dist = compute_box_distance(p_box, o_box, img_w, img_h)
+                    valid_pairs.append((p_box, p_conf, o_box, o_conf, u_box, s_vec, iou_val, b_dist, entries))
 
                 if not valid_pairs:
                     all_preds[img_idx] = {}
                     continue
 
-                boxes_to_extract = [(p, o, u) for (p, _, o, _, u, _, _, _) in valid_pairs]
+                boxes_to_extract = [(p, o, u) for (p, _, o, _, u, _, _, _, _) in valid_pairs]
                 f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract).to(device)
-                s_vecs_batch = torch.stack([s for (_, _, _, _, _, s, _, _) in valid_pairs]).to(device)
+                s_vecs_batch = torch.stack([s for (_, _, _, _, _, s, _, _, _) in valid_pairs]).to(device)
 
                 f_unions = f_fused_batch[:, 1024:1536] if f_fused_batch.shape[-1] == 1536 else f_fused_batch
                 with torch.no_grad():
@@ -104,17 +107,16 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                     final_logits = adapter(clip_logits, f_fused_batch, s_vecs_batch)
                     probs_batch = torch.softmax(final_logits, dim=1).cpu()
 
-                for k_idx, (_, p_conf, _, o_conf, _, _, iou_val, entries) in enumerate(valid_pairs):
+                for k_idx, (_, p_conf, _, o_conf, _, _, iou_val, b_dist, entries) in enumerate(valid_pairs):
                     for verb, _, hoi_id in entries:
                         raw_prob = probs_batch[k_idx, hoi_id].item()
 
-                        if verb in CONTACT_VERBS and iou_val == 0.0:
-                            gated_prob = 0.0
+                        # Vynix Soft Geometric Gate
+                        gate = compute_soft_geometric_gate(verb, iou_val, b_dist)
+                        if gate < 0.05:
                             total_vetoes += 1
-                        else:
-                            gated_prob = raw_prob
 
-                        conf = p_conf * o_conf * gated_prob
+                        conf = p_conf * o_conf * raw_prob * gate
                         if hoi_id not in preds or conf > preds[hoi_id]:
                             preds[hoi_id] = conf
 
@@ -153,15 +155,22 @@ def main():
     parser.add_argument("--model-dir", type=str, default="saved_models")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit test images for testing")
+    parser.add_argument("--detector-model", type=str, default="yolov8m.pt", help="YOLO detector model (e.g. yolov8m.pt, yolov8l.pt, yolov8n.pt)")
     args = parser.parse_args()
 
     print("===========================================================================")
     print("  PROJECT VYNIX — PRETRAINED MODEL EVALUATION")
     print("===========================================================================")
     print(f"  Device: {args.device}")
+    print(f"  Detector: {args.detector_model}")
 
     meta = HOIMeta(args.dataset_dir)
-    extractor = MultiStreamFeatureExtractor(device=args.device, detector_conf=0.08, use_3stream=True)
+    extractor = MultiStreamFeatureExtractor(
+        device=args.device,
+        detector_conf=0.08,
+        use_3stream=True,
+        detector_model=args.detector_model
+    )
     text_weights = extractor.build_text_weights(meta)
 
     # 1. Load the Cache
