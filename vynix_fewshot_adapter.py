@@ -174,7 +174,7 @@ def compute_spatial_vector(p_box: List[float], o_box: List[float], img_w: int, i
 
 class HOIMeta:
     def __init__(self, dataset_dir: str):
-        csv_path = os.path.join(dataset_dir, "list_action.csv")
+        csv_path = dataset_dir + "/list_action.csv"
         df = pd.read_csv(csv_path)
         self.num_classes = len(df)
         self.hoi_to_obj: Dict[int, str] = {}
@@ -697,7 +697,7 @@ def evaluate_adapter(
 
 def main():
     parser = argparse.ArgumentParser(description="Vynix 3-Stream Spatial-Visual Adapter")
-    parser.add_argument("--dataset-dir", type=str, default=r"E:\Dataset")
+    parser.add_argument("--dataset-dir", type=str, default="E:/Dataset")
     parser.add_argument("--k-shots", type=int, nargs="+", default=[1, 5, 10])
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--detector-conf", type=float, default=0.08,
