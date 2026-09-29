@@ -143,7 +143,7 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
         "mAP_rare": float(np.mean(rare_aps)) * 100 if rare_aps else 0.0,
         "mAP_non_rare": float(np.mean(nonrare_aps)) * 100 if nonrare_aps else 0.0,
         "vetoes": total_vetoes,
-        "n_images": n_images,
+        "n_images": processed_count,
         "per_class_ap": per_class_ap,
     }
 
