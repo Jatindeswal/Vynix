@@ -28,6 +28,7 @@ wheels/
 *.pth
 *.bin
 *.onnx
+saved_models_vitb16_backup_3031/
 
 # Dataset caches & Temporary files
 *.parquet

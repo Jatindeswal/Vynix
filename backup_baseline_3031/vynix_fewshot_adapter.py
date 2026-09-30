@@ -471,34 +471,6 @@ class MultiStreamFeatureExtractor:
         final_weights = summed_weights / summed_weights.norm(dim=-1, keepdim=True)
         return final_weights.cpu()
 
-    @torch.no_grad()
-    def build_object_text_weights(self, meta: HOIMeta) -> Dict[str, torch.Tensor]:
-        """
-        Precomputes multi-template text embeddings for isolated object semantic verification.
-        Returns a dictionary mapping object_name -> normalized 512D text embedding tensor on self.device.
-        """
-        unique_objects = sorted(list(set(meta.hoi_to_obj.values())))
-        obj_templates = [
-            "a photo of a {art} {o}",
-            "a photo of the {o}",
-            "a close-up photo of {art} {o}",
-            "a cropped photo of {art} {o}",
-            "an image of {art} {o}",
-        ]
-        obj_weights = {}
-        for obj in unique_objects:
-            art = "an" if obj and obj[0].lower() in "aeiou" else "a"
-            prompts = [t.format(art=art, o=obj.replace("_", " ")) for t in obj_templates]
-            inputs = self.processor(text=prompts, return_tensors="pt", padding=True)
-            inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            feats = self._safe_extract(self.model.get_text_features(**inputs))
-            feats = feats / feats.norm(dim=-1, keepdim=True)
-            avg_feat = feats.mean(dim=0)
-            avg_feat = avg_feat / avg_feat.norm(dim=-1, keepdim=True)
-            obj_weights[obj] = avg_feat
-
-        return obj_weights
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # §6  VYNIX 3-STREAM SPATIAL-VISUAL ADAPTER (Tip-Adapter-F + Spatial MLP)

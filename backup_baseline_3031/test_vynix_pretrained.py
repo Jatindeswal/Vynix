@@ -25,7 +25,7 @@ from vynix_fewshot_adapter import (
 )
 import numpy as np
 
-def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, device, eval_limit=None, det_lambda=0.8, adaptive_alpha=True, obj_text_weights=None, obj_gamma=0.15):
+def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, device, eval_limit=None, det_lambda=0.6, adaptive_alpha=True):
     import pyarrow.parquet as pq
     import gc
 
@@ -119,22 +119,8 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                         final_logits = adapter(clip_logits, f_fused_batch, s_vecs_batch, alpha_override=alpha_vec)
                         probs_batch = torch.softmax(final_logits, dim=1).cpu()
 
-                    if obj_text_weights is not None and obj_gamma > 0.0 and f_fused_batch.shape[-1] == 1536:
-                        f_objs = f_fused_batch[:, 512:1024]
-                        f_objs_norm = f_objs / (f_objs.norm(dim=-1, keepdim=True) + 1e-6)
-                    else:
-                        f_objs_norm = None
-
                     for k_idx, (_, p_conf, _, o_conf, _, _, iou_val, b_dist, entries) in enumerate(valid_pairs):
                         det_score = (p_conf * o_conf) ** det_lambda
-                        obj_gate = 1.0
-                        if f_objs_norm is not None and entries:
-                            hico_name = meta.hoi_to_obj[entries[0][2]]
-                            if hico_name in obj_text_weights:
-                                t_obj = obj_text_weights[hico_name]
-                                cos_sim = (f_objs_norm[k_idx] @ t_obj).item()
-                                obj_gate = max(0.0, cos_sim) ** obj_gamma
-
                         for verb, _, hoi_id in entries:
                             raw_prob = probs_batch[k_idx, hoi_id].item()
 
@@ -143,7 +129,7 @@ def evaluate_pretrained(adapter, extractor, text_weights, meta, test_files, devi
                             if gate < 0.05:
                                 total_vetoes += 1
 
-                            conf = det_score * raw_prob * gate * obj_gate
+                            conf = det_score * raw_prob * gate
                             if hoi_id not in preds or conf > preds[hoi_id]:
                                 preds[hoi_id] = conf
 
@@ -191,12 +177,10 @@ def main():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit test images for testing")
     parser.add_argument("--detector-model", type=str, default="yolov8m.pt", help="YOLO detector model (e.g. yolov8m.pt, yolov8l.pt, yolov8n.pt)")
-    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch16", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch16, openai/clip-vit-base-patch32)")
-    parser.add_argument("--det-lambda", type=float, default=0.8, help="Sublinear detector score calibration exponent (default: 0.8)")
+    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch32", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch32, openai/clip-vit-base-patch16)")
+    parser.add_argument("--det-lambda", type=float, default=0.6, help="Sublinear detector score calibration exponent (default: 0.6)")
     parser.add_argument("--no-prompt-ensemble", action="store_true", help="Disable multi-template prompt ensemble")
     parser.add_argument("--no-adaptive-alpha", action="store_true", help="Disable class-adaptive alpha blending")
-    parser.add_argument("--obj-gamma", type=float, default=0.15, help="Exponent for isolated object semantic verification gate (default: 0.15, 0 to disable)")
-    parser.add_argument("--no-obj-gate", action="store_true", help="Disable isolated object semantic verification gate")
     args = parser.parse_args()
 
     print("===========================================================================")
@@ -208,7 +192,6 @@ def main():
     print(f"  Score Calibration lambda: {args.det_lambda}")
     print(f"  Prompt Ensemble: {not args.no_prompt_ensemble}")
     print(f"  Adaptive Alpha: {not args.no_adaptive_alpha}")
-    print(f"  Object Gate (gamma): {args.obj_gamma if not args.no_obj_gate else 0.0}")
 
     meta = HOIMeta(args.dataset_dir)
     extractor = MultiStreamFeatureExtractor(
@@ -250,12 +233,6 @@ def main():
 
     test_files = sorted(glob.glob(os.path.join(args.dataset_dir, "data", "test-*.parquet")))
 
-    if not args.no_obj_gate and args.obj_gamma > 0.0:
-        print("  Precomputing multi-template object text embeddings for verification gate...")
-        obj_text_weights = extractor.build_object_text_weights(meta)
-    else:
-        obj_text_weights = None
-
     # 3. Evaluate
     res = evaluate_pretrained(
         adapter=adapter,
@@ -266,9 +243,7 @@ def main():
         device=args.device,
         eval_limit=args.limit,
         det_lambda=args.det_lambda,
-        adaptive_alpha=not args.no_adaptive_alpha,
-        obj_text_weights=obj_text_weights,
-        obj_gamma=args.obj_gamma
+        adaptive_alpha=not args.no_adaptive_alpha
     )
 
     print("\n===========================================================================")
