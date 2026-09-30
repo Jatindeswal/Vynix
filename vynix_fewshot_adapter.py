@@ -285,26 +285,48 @@ class MultiStreamFeatureExtractor:
         return feats
 
     @torch.no_grad()
-    def _encode_crops_batch(self, pil_crops: List[Image.Image], max_batch: int = 32) -> torch.Tensor:
+    def _encode_crops_batch(self, pil_crops: List[Image.Image], max_batch: int = 16) -> torch.Tensor:
         """
         Batched CLIP image encoding using torchvision transforms for high throughput and low RAM footprint.
-        Args:
-            pil_crops: list of PIL Images
-            max_batch: chunk size to prevent VRAM spikes (32 is optimal for 4GB VRAM)
-        Returns:
-            (N, 512) tensor on CPU
+        Adapts dynamically to available VRAM to prevent Out-Of-Memory errors on 4GB GPUs.
         """
         if not pil_crops:
             return torch.empty(0, 512)
 
+        # ViT-B/16 uses 4x more sequence tokens than ViT-B/32, so use 16 as default ceiling
+        if "patch16" in getattr(self, "clip_model_name", ""):
+            max_batch = min(max_batch, 16)
+
         all_feats = []
-        for i in range(0, len(pil_crops), max_batch):
-            batch_crops = pil_crops[i : i + max_batch]
-            batch_tensors = torch.stack([self.clip_preprocess(crop) for crop in batch_crops]).to(self.device)
-            out = self.model.get_image_features(pixel_values=batch_tensors)
-            feats = self._safe_extract(out)
-            feats = feats / feats.norm(dim=-1, keepdim=True)
-            all_feats.append(feats.cpu())
+        i = 0
+        current_bs = max_batch
+        while i < len(pil_crops):
+            chunk = pil_crops[i : i + current_bs]
+            try:
+                batch_tensors = torch.stack([self.clip_preprocess(crop) for crop in chunk]).to(self.device)
+                out = self.model.get_image_features(pixel_values=batch_tensors)
+                feats = self._safe_extract(out)
+                feats = feats / feats.norm(dim=-1, keepdim=True)
+                all_feats.append(feats.cpu())
+                del batch_tensors, out, feats
+                i += len(chunk)
+            except torch.cuda.OutOfMemoryError:
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                if current_bs > 2:
+                    current_bs = max(1, current_bs // 2)
+                    continue
+                else:
+                    # Final fallback: encode single crop or chunk on CPU
+                    batch_tensors = torch.stack([self.clip_preprocess(crop) for crop in chunk])
+                    cpu_model = self.model.to("cpu")
+                    out = cpu_model.get_image_features(pixel_values=batch_tensors)
+                    feats = self._safe_extract(out)
+                    feats = feats / feats.norm(dim=-1, keepdim=True)
+                    all_feats.append(feats.cpu())
+                    cpu_model.to(self.device)
+                    del batch_tensors, out, feats
+                    i += len(chunk)
 
         return torch.cat(all_feats, dim=0)
 
@@ -312,6 +334,7 @@ class MultiStreamFeatureExtractor:
     def _encode_crop(self, pil_crop: Image.Image) -> torch.Tensor:
         feats = self._encode_crops_batch([pil_crop], max_batch=1)
         return feats.squeeze(0)
+
 
     def extract_visual_features_batch(
         self, pil_img: Image.Image, boxes_list: List[Tuple[List[float], List[float], List[float]]]
