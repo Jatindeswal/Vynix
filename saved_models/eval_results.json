@@ -1,0 +1,8 @@
+{
+  "mAP_full": 28.23188055479618,
+  "mAP_rare": 28.98398498883,
+  "mAP_non_rare": 27.981179076784912,
+  "vetoes": 265189,
+  "detector": "yolov8m.pt",
+  "clip_model": "openai/clip-vit-base-patch32"
+}

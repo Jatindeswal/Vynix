@@ -551,16 +551,38 @@ table.ieee-table tr.bottom-rule td {
                     <td><b>18.57%</b></td>
                     <td><b>23.42%</b></td>
                 </tr>
-                <tr style="background-color: #f0fdf4;">
-                    <td style="text-align: left;"><b>Vynix-Full (Trained)</b></td>
-                    <td><b>Ours (Full)</b></td>
-                    <td><b>Full Exemplar Cache</b></td>
+                <tr style="background-color: #f8fafc;">
+                    <td style="text-align: left;"><b>Vynix-Base (Trained)</b></td>
+                    <td><b>Ours (Base)</b></td>
+                    <td><b>Full Cache + Hard Veto</b></td>
                     <td><b>YOLOv8n + CLIP</b></td>
                     <td><b>38,118</b></td>
                     <td><b>0.72h</b></td>
                     <td><b>22.03%</b></td>
                     <td><b>23.32%</b></td>
                     <td><b>21.59%</b></td>
+                </tr>
+                <tr style="background-color: #f0fdf4;">
+                    <td style="text-align: left;"><b>Vynix-M (Soft Gate)</b></td>
+                    <td><b>Ours (YOLO-M)</b></td>
+                    <td><b>Full Cache + Soft Gate</b></td>
+                    <td><b>YOLOv8m + CLIP</b></td>
+                    <td><b>38,118</b></td>
+                    <td><b>0.72h</b></td>
+                    <td><b>28.23%</b></td>
+                    <td><b>28.98%</b></td>
+                    <td><b>27.98%</b></td>
+                </tr>
+                <tr style="background-color: #ecfdf5;">
+                    <td style="text-align: left;"><b>Vynix-M (ViT-B/16)</b></td>
+                    <td><b>Ours (B/16)</b></td>
+                    <td><b>Full Cache + Soft Gate</b></td>
+                    <td><b>YOLOv8m + ViT-B/16</b></td>
+                    <td><b>38,118</b></td>
+                    <td><b>0.85h</b></td>
+                    <td><b>30.31%</b></td>
+                    <td><b>29.71%</b></td>
+                    <td><b>30.51%</b></td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><b>Vynix-Adapter (1-Shot)</b></td>
