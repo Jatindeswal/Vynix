@@ -1,7 +1,7 @@
 {
-  "mAP_full": 31.712578075041932,
-  "mAP_rare": 30.63255407328392,
-  "mAP_non_rare": 32.07258607562794,
+  "mAP_full": 34.8046006206063,
+  "mAP_rare": 36.10319951642785,
+  "mAP_non_rare": 34.37173432199913,
   "vetoes": 272946,
   "detector": "yolov8x.pt",
   "clip_model": "openai/clip-vit-base-patch16",

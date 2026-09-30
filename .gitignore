@@ -29,6 +29,9 @@ wheels/
 *.bin
 *.onnx
 saved_models_vitb16_backup_3031/
+saved_models_vitb16_backup_3171/
+saved_models_yolov8x_vitb16/
+!saved_models_yolov8x_vitb16/eval_results.json
 
 # Dataset caches & Temporary files
 *.parquet

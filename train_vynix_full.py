@@ -59,92 +59,105 @@ def build_full_dataset_cache(train_files, meta, extractor, device, output_dir="s
             shard_values_list = []
             shard_spatials_list = []
 
-            df = pd.read_parquet(f)
-            for _, row in df.iterrows():
-                if max_images and processed_count >= max_images:
-                    break
-                processed_count += 1
-                pbar.update(1)
+            pf = pq.ParquetFile(f)
+            reached_limit = False
+            for batch in pf.iter_batches(batch_size=32):
+                df = batch.to_pandas()
+                for _, row in df.iterrows():
+                    if max_images and processed_count >= max_images:
+                        reached_limit = True
+                        break
+                    processed_count += 1
+                    pbar.update(1)
 
-                pos_str = str(row.get("positive_objects", ""))
-                if not pos_str.strip() or pos_str.lower() == "nan":
-                    continue
-
-                pos_list = parse_int_list(pos_str)
-                pos_set = set(pos_list)
-
-                # Exemplar balancing: check if all classes in this image are already saturated
-                if max_shots_per_class:
-                    needed = [hid for hid in pos_set if hid < meta.num_classes and class_counts[hid] < max_shots_per_class]
-                    if not needed:
+                    pos_str = str(row.get("positive_objects", ""))
+                    if not pos_str.strip() or pos_str.lower() == "nan":
                         continue
 
-                img_data = row["image"]
-                if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
-                    pil_img = Image.open(io.BytesIO(img_data["bytes"]))
-                elif isinstance(img_data, Image.Image):
-                    pil_img = img_data
-                else:
-                    continue
+                    pos_list = parse_int_list(pos_str)
+                    pos_set = set(pos_list)
 
-                if pil_img.mode != "RGB":
-                    pil_img = pil_img.convert("RGB")
-
-                persons, objects = extractor.detect(pil_img)
-                if not persons or not objects:
-                    continue
-
-                img_w, img_h = pil_img.size
-
-                candidate_pairs = []
-                for (p_box, p_conf) in persons:
-                    for (o_box, o_conf, o_cls) in objects:
-                        coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
-                        if not coco_name:
-                            continue
-                        hico_name = normalize_name(coco_name)
-
-                        entries = meta.obj_to_entries.get(hico_name, [])
-                        if not entries:
+                    # Exemplar balancing: check if all classes in this image are already saturated
+                    if max_shots_per_class:
+                        needed = [hid for hid in pos_set if hid < meta.num_classes and class_counts[hid] < max_shots_per_class]
+                        if not needed:
                             continue
 
-                        rel_ids = [hid for _, _, hid in entries if hid in pos_set]
-                        if not rel_ids:
-                            continue
+                    img_data = row["image"]
+                    if isinstance(img_data, dict) and "bytes" in img_data and img_data["bytes"] is not None:
+                        pil_img = Image.open(io.BytesIO(img_data["bytes"]))
+                    elif isinstance(img_data, Image.Image):
+                        pil_img = img_data
+                    else:
+                        continue
 
-                        # Check exemplar budget
-                        if max_shots_per_class:
-                            rel_ids_needed = [hid for hid in rel_ids if class_counts[hid] < max_shots_per_class]
-                            if not rel_ids_needed:
+                    if pil_img.mode != "RGB":
+                        pil_img = pil_img.convert("RGB")
+
+                    persons, objects = extractor.detect(pil_img)
+                    if not persons or not objects:
+                        del pil_img
+                        continue
+
+                    img_w, img_h = pil_img.size
+
+                    candidate_pairs = []
+                    for (p_box, p_conf) in persons:
+                        for (o_box, o_conf, o_cls) in objects:
+                            coco_name = COCO_CLASSES[o_cls] if o_cls < len(COCO_CLASSES) else None
+                            if not coco_name:
                                 continue
-                            rel_ids = rel_ids_needed
+                            hico_name = normalize_name(coco_name)
 
-                        u_box = compute_union_box(p_box, o_box)
-                        s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
-                        candidate_pairs.append((p_box, o_box, u_box, rel_ids, s_vec))
+                            entries = meta.obj_to_entries.get(hico_name, [])
+                            if not entries:
+                                continue
 
-                if not candidate_pairs:
-                    continue
+                            rel_ids = [hid for _, _, hid in entries if hid in pos_set]
+                            if not rel_ids:
+                                continue
 
-                if len(candidate_pairs) > 20:
-                    candidate_pairs = candidate_pairs[:20]
+                            # Check exemplar budget
+                            if max_shots_per_class:
+                                rel_ids_needed = [hid for hid in rel_ids if class_counts[hid] < max_shots_per_class]
+                                if not rel_ids_needed:
+                                    continue
+                                rel_ids = rel_ids_needed
 
-                # Batched visual feature extraction for all positive pairs in this image
-                boxes_to_extract = [(p, o, u) for (p, o, u, _, _) in candidate_pairs]
-                f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract)
+                            u_box = compute_union_box(p_box, o_box)
+                            s_vec = compute_spatial_vector(p_box, o_box, img_w, img_h)
+                            candidate_pairs.append((p_box, o_box, u_box, rel_ids, s_vec))
 
-                for idx, (_, _, _, rel_ids, s_vec) in enumerate(candidate_pairs):
-                    label = torch.zeros(meta.num_classes)
-                    for hid in rel_ids:
-                        label[hid] = 1.0
-                        class_counts[hid] += 1
+                    if not candidate_pairs:
+                        del pil_img
+                        continue
 
-                    shard_keys_list.append(f_fused_batch[idx].cpu())
-                    shard_values_list.append(label.cpu())
-                    shard_spatials_list.append(s_vec.cpu())
+                    if len(candidate_pairs) > 20:
+                        candidate_pairs = candidate_pairs[:20]
 
-            del df
-            gc.collect()
+                    # Batched visual feature extraction for all positive pairs in this image
+                    boxes_to_extract = [(p, o, u) for (p, o, u, _, _) in candidate_pairs]
+                    f_fused_batch = extractor.extract_visual_features_batch(pil_img, boxes_to_extract)
+
+                    for idx, (_, _, _, rel_ids, s_vec) in enumerate(candidate_pairs):
+                        label = torch.zeros(meta.num_classes)
+                        for hid in rel_ids:
+                            label[hid] = 1.0
+                            class_counts[hid] += 1
+
+                        shard_keys_list.append(f_fused_batch[idx].cpu())
+                        shard_values_list.append(label.cpu())
+                        shard_spatials_list.append(s_vec.cpu())
+
+                    del pil_img
+
+                del df
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                gc.collect()
+
+                if reached_limit:
+                    break
 
             # Save this shard immediately to disk to free RAM
             if shard_keys_list:
@@ -162,7 +175,7 @@ def build_full_dataset_cache(train_files, meta, extractor, device, output_dir="s
             del shard_keys_list, shard_values_list, shard_spatials_list
             gc.collect()
 
-            if max_images and processed_count >= max_images:
+            if reached_limit:
                 break
 
     if not shard_files:
@@ -225,15 +238,15 @@ def train_adapter_full(adapter, train_features, train_labels, train_spatials, te
 
 def main():
     parser = argparse.ArgumentParser(description="Train Project Vynix on Full Dataset")
-    parser.add_argument("--dataset-dir", type=str, default="/app")
-    parser.add_argument("--output-dir", type=str, default="saved_models")
+    parser.add_argument("--dataset-dir", type=str, default="E:\\Dataset")
+    parser.add_argument("--output-dir", type=str, default="saved_models_yolov8x_vitb16")
     parser.add_argument("--epochs", type=int, default=15)
-    parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--limit", type=int, default=None, help="Limit training images for testing")
     parser.add_argument("--max-shots", type=int, default=50, help="Max exemplars per class (0 for unlimited)")
-    parser.add_argument("--detector-model", type=str, default="yolov8m.pt", help="YOLO detector model (e.g. yolov8m.pt, yolov8l.pt, yolov8n.pt)")
-    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch32", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch32, openai/clip-vit-base-patch16)")
+    parser.add_argument("--detector-model", type=str, default="yolov8x.pt", help="YOLO detector model (e.g. yolov8x.pt, yolov8m.pt)")
+    parser.add_argument("--clip-model", type=str, default="openai/clip-vit-base-patch16", help="CLIP vision backbone (e.g. openai/clip-vit-base-patch16)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -261,6 +274,13 @@ def main():
         max_images=args.limit,
         max_shots_per_class=max_shots
     )
+
+    # Free extractor and intermediate detector weights from VRAM before training adapter
+    del extractor
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    import gc
+    gc.collect()
 
     cache_path = os.path.join(args.output_dir, "vynix_full_cache.pt")
     torch.save({

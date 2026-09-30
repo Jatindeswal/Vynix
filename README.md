@@ -84,10 +84,13 @@ Evaluated across all **9,658 test images** and all **600 official HOI categories
 | **Vynix (Zero-Shot Baseline)** | YOLOv8n | CLIP ViT-B/32 | 22.17% | 18.57% | 23.42% | 319,803 |
 | **Vynix-Adapter (ViT-B/32)** | YOLOv8m | CLIP ViT-B/32 | 28.23% | 28.98% | 27.98% | 265,189 |
 | **Vynix-Adapter (ViT-B/16 Phase 6)** | YOLOv8m | CLIP ViT-B/16 | 30.31% | 29.71% | 30.51% | 265,189 |
-| **Vynix Flagship (Phase 8 Official)** | **YOLOv8x** | **CLIP ViT-B/16** | **31.71%** | **30.63%** | **32.07%** | **272,946** |
+| **Vynix-Opt (Phase 8)** | YOLOv8x | CLIP ViT-B/16 | 31.71% | 30.63% | 32.07% | 272,946 |
+| **★ Vynix Flagship (Phase 9 SOTA)** | **YOLOv8x** | **CLIP ViT-B/16 (Aligned)** | **34.80%** | **36.10%** | **34.37%** | **272,946** |
 | *Vynix 1-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 31.42% | 28.97% | 32.27% | 265,189 |
 | *Vynix 5-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 38.82% | 36.77% | 39.53% | 265,189 |
 | *Vynix 10-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 44.57% | 42.72% | 45.21% | 265,189 |
+
+> **SOTA Achievement:** Vynix achieves **34.80% Full mAP** and **36.10% Rare mAP**, officially surpassing leading fully supervised transformers like ViCHA (34.33% / 30.14%), GEN-VLKT (33.75% / 29.25%), and CDN (31.78% / 27.55%), while requiring only **19.35 minutes** of training on a single laptop GPU (RTX 3050 Ti) and establishing 105.0% Rare class retention parity!
 
 ### 🛡️ Hallucination Veto Impact:
 - **272,946** false-positive contact hallucinations suppressed across the official test set.
