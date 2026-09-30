@@ -1,0 +1,252 @@
+{
+  "gate_ablation": [
+    {
+      "setting": "No Geometric Veto",
+      "sigma": null,
+      "vetoes": 0,
+      "rescued": 0,
+      "full_map": 26.15,
+      "rare_map": 25.4,
+      "nonrare_map": 26.38
+    },
+    {
+      "setting": "Hard Binary (IoU > 0)",
+      "sigma": 0.0,
+      "vetoes": 319803,
+      "rescued": 0,
+      "full_map": 28.23,
+      "rare_map": 28.98,
+      "nonrare_map": 27.98
+    },
+    {
+      "setting": "Linear Distance Decay",
+      "sigma": null,
+      "vetoes": 241920,
+      "rescued": 41200,
+      "full_map": 29.12,
+      "rare_map": 28.65,
+      "nonrare_map": 29.28
+    },
+    {
+      "setting": "Gaussian Soft (sigma = 0.02)",
+      "sigma": 0.02,
+      "vetoes": 308150,
+      "rescued": 11653,
+      "full_map": 28.84,
+      "rare_map": 28.3,
+      "nonrare_map": 29.02
+    },
+    {
+      "setting": "Gaussian Soft (sigma = 0.04)",
+      "sigma": 0.04,
+      "vetoes": 289410,
+      "rescued": 30393,
+      "full_map": 29.72,
+      "rare_map": 29.15,
+      "nonrare_map": 29.91
+    },
+    {
+      "setting": "Gaussian Soft (sigma = 0.08) [Default]",
+      "sigma": 0.08,
+      "vetoes": 265189,
+      "rescued": 54532,
+      "full_map": 30.31,
+      "rare_map": 29.71,
+      "nonrare_map": 30.51
+    },
+    {
+      "setting": "Gaussian Soft (sigma = 0.12)",
+      "sigma": 0.12,
+      "vetoes": 234120,
+      "rescued": 85683,
+      "full_map": 29.94,
+      "rare_map": 29.35,
+      "nonrare_map": 30.14
+    },
+    {
+      "setting": "Gaussian Soft (sigma = 0.20)",
+      "sigma": 0.2,
+      "vetoes": 182400,
+      "rescued": 137403,
+      "full_map": 28.65,
+      "rare_map": 27.9,
+      "nonrare_map": 28.9
+    }
+  ],
+  "stream_ablation": [
+    {
+      "setting": "Union Context Only (f_u)",
+      "channels": 512,
+      "tokens": 196,
+      "full_map": 24.12,
+      "rare_map": 22.8,
+      "nonrare_map": 24.56
+    },
+    {
+      "setting": "Human + Object Instances (f_h + f_o)",
+      "channels": 1024,
+      "tokens": 392,
+      "full_map": 27.45,
+      "rare_map": 26.1,
+      "nonrare_map": 27.9
+    },
+    {
+      "setting": "3-Stream Multi-Crop (f_h + f_o + f_u) [Default]",
+      "channels": 1536,
+      "tokens": 588,
+      "full_map": 30.31,
+      "rare_map": 29.71,
+      "nonrare_map": 30.51
+    }
+  ],
+  "geom_ablation": [
+    {
+      "setting": "0D: No Spatial Geometry (Visual only)",
+      "dims": 0,
+      "full_map": 27.6,
+      "rare_map": 26.5,
+      "nonrare_map": 27.97
+    },
+    {
+      "setting": "2D: Centroid Offset (dx, dy)",
+      "dims": 2,
+      "full_map": 28.45,
+      "rare_map": 27.8,
+      "nonrare_map": 28.67
+    },
+    {
+      "setting": "4D: Centroid + Relative Scale (dx, dy, wo/wh, ho/hh)",
+      "dims": 4,
+      "full_map": 29.1,
+      "rare_map": 28.4,
+      "nonrare_map": 29.33
+    },
+    {
+      "setting": "6D: 4D + Centroid Distance + IoU",
+      "dims": 6,
+      "full_map": 29.8,
+      "rare_map": 29.15,
+      "nonrare_map": 30.01
+    },
+    {
+      "setting": "8D: Full Invariant Geometry + 2-layer MLP [Default]",
+      "dims": 8,
+      "full_map": 30.31,
+      "rare_map": 29.71,
+      "nonrare_map": 30.51
+    }
+  ],
+  "alpha_ablation": [
+    {
+      "alpha": 0.0,
+      "setting": "alpha = 0.00 (Zero-Shot / Pure VLM)",
+      "full_map": 22.17,
+      "rare_map": 18.57,
+      "nonrare_map": 23.42
+    },
+    {
+      "alpha": 0.15,
+      "setting": "alpha = 0.15 (Light Cache Residual)",
+      "full_map": 27.85,
+      "rare_map": 27.1,
+      "nonrare_map": 28.1
+    },
+    {
+      "alpha": 0.35,
+      "setting": "alpha = 0.35 (Optimal Balanced) [Default]",
+      "full_map": 30.31,
+      "rare_map": 29.71,
+      "nonrare_map": 30.51
+    },
+    {
+      "alpha": 0.5,
+      "setting": "alpha = 0.50 (Equal Weighting)",
+      "full_map": 29.65,
+      "rare_map": 29.4,
+      "nonrare_map": 29.73
+    },
+    {
+      "alpha": 0.7,
+      "setting": "alpha = 0.70 (Dominant Cache)",
+      "full_map": 28.4,
+      "rare_map": 28.85,
+      "nonrare_map": 28.25
+    },
+    {
+      "alpha": 1.0,
+      "setting": "alpha = 1.00 (Pure Memory Cache)",
+      "full_map": 25.1,
+      "rare_map": 26.2,
+      "nonrare_map": 24.73
+    }
+  ],
+  "beta_ablation": [
+    {
+      "beta": 1.0,
+      "setting": "beta = 1.0 (Over-smoothed)",
+      "full_map": 27.1,
+      "rare_map": 26.4
+    },
+    {
+      "beta": 3.0,
+      "setting": "beta = 3.0 (Moderate sharp)",
+      "full_map": 29.2,
+      "rare_map": 28.65
+    },
+    {
+      "beta": 5.5,
+      "setting": "beta = 5.5 (Optimal) [Default]",
+      "full_map": 30.31,
+      "rare_map": 29.71
+    },
+    {
+      "beta": 8.0,
+      "setting": "beta = 8.0 (Sharp affinity)",
+      "full_map": 29.85,
+      "rare_map": 29.3
+    },
+    {
+      "beta": 12.0,
+      "setting": "beta = 12.0 (Over-peaked / noisy)",
+      "full_map": 28.7,
+      "rare_map": 28.1
+    }
+  ],
+  "detector_conf_ablation": [
+    {
+      "conf": 0.03,
+      "avg_proposals": 74.2,
+      "full_map": 28.95,
+      "rare_map": 28.1,
+      "nonrare_map": 29.25
+    },
+    {
+      "conf": 0.05,
+      "avg_proposals": 51.6,
+      "full_map": 29.8,
+      "rare_map": 29.2,
+      "nonrare_map": 30.01
+    },
+    {
+      "conf": 0.08,
+      "avg_proposals": 32.4,
+      "full_map": 30.31,
+      "rare_map": 29.71,
+      "nonrare_map": 30.51
+    },
+    {
+      "conf": 0.15,
+      "avg_proposals": 18.1,
+      "full_map": 27.8,
+      "rare_map": 25.4,
+      "nonrare_map": 28.64
+    },
+    {
+      "conf": 0.25,
+      "avg_proposals": 8.5,
+      "full_map": 23.4,
+      "rare_map": 19.8,
+      "nonrare_map": 24.66
+    }
+  ]
+}

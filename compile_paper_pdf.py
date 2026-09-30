@@ -660,7 +660,7 @@ table.ieee-table tr.bottom-rule td {
     <h3 class="subsec-heading">A. Benchmark Dataset &amp; Implementation Details</h3>
     <p><b>Dataset:</b> We evaluate on the official HICO-DET benchmark [15], containing 38,118 training images and 9,658 test images across 600 HOI categories (80 COCO objects and 117 verb predicates). Categories are partitioned into Full (600), Rare (155, &lt;10 training instances), and Non-Rare (445, &ge;10 instances).</p>
     <p><b>Evaluation Protocol:</b> We compute Mean Average Precision (mAP) under the standard Default setting, requiring human and object box IoU &ge; 0.5 with ground truth. In our flagship evaluation on all 9,658 test images, 265,189 spatial hallucinations were suppressed, yielding verified scores of <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>.</p>
-    <p><b>Hardware and Environment:</b> All training runs were conducted on a single commodity GPU environment (NVIDIA RTX 3050 Ti Laptop / T4 GPU). Offline feature caching and adapter training completed in just <b>17.33 minutes (0.29 GPU-hours)</b>, demonstrating extreme computational efficiency without distributed clusters.</p>
+    <p><b>Hardware and Environment:</b> All training runs were conducted on a single commodity GPU environment (NVIDIA GeForce RTX 3050 Ti Laptop GPU, 4 GB VRAM). Offline feature caching and adapter training completed in just <b>17.33 minutes (0.29 GPU-hours)</b>, demonstrating extreme computational efficiency without distributed clusters.</p>
 
     <!-- Figure 2 -->
     <div class="figure-box">
