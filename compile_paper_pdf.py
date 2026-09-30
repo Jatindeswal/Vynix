@@ -26,16 +26,6 @@ template = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>Project Vynix: Decoupled Human-Object Interaction Detection</title>
-<!-- KaTeX for math rendering -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
-    onload="renderMathInElement(document.body, {
-        delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false}
-        ]
-    });"></script>
 
 <style>
 @page {
@@ -162,7 +152,21 @@ p.no-indent {
     text-indent: 0;
 }
 
-/* Equations */
+/* Native Math Typography */
+i {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+}
+
+sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+sup { top: -0.5em; }
+sub { bottom: -0.25em; }
+
 .eq-box {
     text-align: center;
     margin: 4.5pt 0;
@@ -172,6 +176,51 @@ p.no-indent {
 .eq-num {
     float: right;
     font-size: 8.6pt;
+    font-style: normal;
+}
+
+.math-expr {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 9.1pt;
+}
+
+.eq-table {
+    margin: 4pt auto;
+    border-collapse: collapse;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 8.8pt;
+}
+
+.eq-table td {
+    padding: 1pt 2pt;
+    vertical-align: middle;
+    border: none !important;
+}
+
+.frac {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 1.5pt;
+    font-size: 0.88em;
+}
+
+.frac .num {
+    border-bottom: 0.7pt solid #000;
+    padding-bottom: 1pt;
+}
+
+.frac .den {
+    padding-top: 1pt;
+}
+
+.eq-num-cell {
+    text-align: right;
+    width: 25pt;
+    font-size: 8.8pt;
+    font-style: normal;
 }
 
 /* Tables */
@@ -282,7 +331,7 @@ table.ieee-table tr.bottom-rule td {
     </div>
 
     <h2 class="sec-heading">I. Introduction</h2>
-    <p>Human-Object Interaction (HOI) detection is a core computer vision task essential for embodied artificial intelligence, autonomous robotics, assistive human-computer interaction, and intelligent video surveillance [1], [2]. The task requires detecting human-object bounding box pairs and classifying the active relational verb predicates linking them, formalized as structured triplets $\langle \text{human}, \text{predicate}, \text{object} \rangle$.</p>
+    <p>Human-Object Interaction (HOI) detection is a core computer vision task essential for embodied artificial intelligence, autonomous robotics, assistive human-computer interaction, and intelligent video surveillance [1], [2]. The task requires detecting human-object bounding box pairs and classifying the active relational verb predicates linking them, formalized as structured triplets &lang;human, predicate, object&rang;.</p>
     
     <p>Despite significant empirical progress over recent years, contemporary HOI architectures continue to grapple with three fundamental bottlenecks:</p>
     <p><b>1) Spatial Blindness and Hallucinations:</b> Large pretrained Vision-Language Models (VLMs), such as CLIP [16], align global image-level tokens with textual prompts. However, they lack explicit inductive geometric priors. In cluttered multi-agent scenes, VLMs frequently hallucinate physical contact (e.g., predicting <i>holding cup</i> or <i>riding bicycle</i>) for humans who are merely co-present in the scene but separated by large spatial distances.</p>
@@ -299,7 +348,7 @@ table.ieee-table tr.bottom-rule td {
     <p>&bull; We design <b>Vynix-Adapter-3S</b>, a decoupled HOI architecture combining YOLOv8-medium, a frozen 3-Stream CLIP ViT-B/16 visual encoder, and an 8D spatial geometry MLP, enabling end-to-end inference without backbone fine-tuning.</p>
     <p>&bull; We propose a <b>Soft Continuous Geometric Veto Gate</b> that suppresses 265,189 false positive spatial hallucinations on the 9,658 HICO-DET test images, while smoothly recovering 54,532 border-touching interactions that rigid binary thresholds discarded.</p>
     <p>&bull; We establish near-perfect <b>Rare vs. Non-Rare class parity</b> (29.71% vs. 30.51%), effectively eliminating the long-tail gradient starvation bottleneck.</p>
-    <p>&bull; Rigorous experiments on all 9,658 test images demonstrate that Vynix achieves <b>30.31% Full mAP</b> while training in only <b>17.33 minutes on a single commodity GPU</b> (0.29 GPU-hours), representing a $300\times$ to $500\times$ reduction in training compute compared to leading DETR and diffusion models.</p>
+    <p>&bull; Rigorous experiments on all 9,658 test images demonstrate that Vynix achieves <b>30.31% Full mAP</b> while training in only <b>17.33 minutes on a single commodity GPU</b> (0.29 GPU-hours), representing a 300&times; to 500&times; reduction in training compute compared to leading DETR and diffusion models.</p>
 
     <h2 class="sec-heading">II. Related Work</h2>
     <h3 class="subsec-heading">A. Two-Stage CNN-Based HOI Detectors</h3>
@@ -309,64 +358,85 @@ table.ieee-table tr.bottom-rule td {
     <p>The emergence of DEtection TRansformer (DETR) motivated one-stage set-prediction architectures. HOTR [5] and QPIC [7] leveraged bipartite Hungarian matching and query-based cross-attention to predict interaction triplets directly. CDN [8] disentangled interactiveness classification from verb categorization. STIP [9] incorporated spatial interaction primitives. While these architectures advanced Full mAP to the 29&ndash;32% regime, their reliance on end-to-end backpropagation across 38,118 images led to severe overfitting on Rare classes and high computational requirements (60&ndash;80 GPU-hours).</p>
 
     <h3 class="subsec-heading">C. Vision-Language Models and Decoupled Adapters</h3>
-    <p>To alleviate semantic sparsity, recent works transfer knowledge from pretrained Vision-Language Models (VLMs). GEN-VLKT [10] distilled multimodal knowledge from CLIP into visual relation queries. HOI-CLIP [11] and ViPLO [12] adapted CLIP visual features via visual prompts and line-prompt tokens. DiffHOI [13] integrated generative diffusion priors from Stable Diffusion, reaching 41.50% mAP at the expense of 120 GPU-hours. Most recently, ADA-CM [14] introduced adaptive cross-modal context modeling with a Swin-Large backbone, attaining 43.20% mAP over 140 GPU-hours. In contrast, Vynix achieves competitive performance with a $300\times$ reduction in training compute by decoupling geometric validation from visual classification.</p>
+    <p>To alleviate semantic sparsity, recent works transfer knowledge from pretrained Vision-Language Models (VLMs). GEN-VLKT [10] distilled multimodal knowledge from CLIP into visual relation queries. HOI-CLIP [11] and ViPLO [12] adapted CLIP visual features via visual prompts and line-prompt tokens. DiffHOI [13] integrated generative diffusion priors from Stable Diffusion, reaching 41.50% mAP at the expense of 120 GPU-hours. Most recently, ADA-CM [14] introduced adaptive cross-modal context modeling with a Swin-Large backbone, attaining 43.20% mAP over 140 GPU-hours. In contrast, Vynix achieves competitive performance with a 300&times; reduction in training compute by decoupling geometric validation from visual classification.</p>
 
     <h2 class="sec-heading">III. Proposed Methodology: Project Vynix</h2>
     
     <h3 class="subsec-heading">A. Pipeline Overview and Problem Formulation</h3>
-    <p>Given an input RGB image $I \in \mathbb{R}^{H \times W \times 3}$, our objective is to output a set of detected interaction triplets $\mathcal{Y} = \{ \langle b_h, b_o, a \rangle_m \}_{m=1}^M$, where $b_h = (x_1, y_1, x_2, y_2) \in \mathbb{R}^4$ denotes the human bounding box, $b_o \in \mathbb{R}^4$ denotes the object bounding box with object class $c_o \in \{1, \dots, 80\}$, and $a \in \{1, \dots, 117\}$ represents the verb predicate. The complete interaction class $k \in \{1, \dots, 600\}$ uniquely pairs an object $c_o$ with a verb $a$.</p>
+    <p>Given an input RGB image <i>I</i> &isin; &#8477;<sup><i>H</i> &times; <i>W</i> &times; 3</sup>, our objective is to output a set of detected interaction triplets <i>Y</i> = { &lang;<i>b<sub>h</sub></i>, <i>b<sub>o</sub></i>, <i>a</i>&rang;<sub><i>m</i></sub> }<sub><i>m</i>=1</sub><sup><i>M</i></sup>, where <i>b<sub>h</sub></i> = (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>, <i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) &isin; &#8477;<sup>4</sup> denotes the human bounding box, <i>b<sub>o</sub></i> &isin; &#8477;<sup>4</sup> denotes the object bounding box with object class <i>c<sub>o</sub></i> &isin; {1, &hellip;, 80}, and <i>a</i> &isin; {1, &hellip;, 117} represents the verb predicate. The complete interaction class <i>k</i> &isin; {1, &hellip;, 600} uniquely pairs an object <i>c<sub>o</sub></i> with a verb <i>a</i>.</p>
 
     <h3 class="subsec-heading">B. Entity Localization (&ldquo;The Eyes&rdquo;)</h3>
     <p>Candidate human and object proposals are generated using YOLOv8-medium:</p>
     <div class="eq-box">
-        $\{(b_h, s_h)\}, \{(b_o, s_o, c_o)\} = \text{YOLOv8}(I)$
+        <span class="math-expr">{(<i>b<sub>h</sub></i>, <i>s<sub>h</sub></i>)}, {(<i>b<sub>o</sub></i>, <i>s<sub>o</sub></i>, <i>c<sub>o</sub></i>)} = YOLOv8(<i>I</i>)</span>
         <span class="eq-num">(1)</span>
     </div>
-    <p class="no-indent">where $s_h, s_o \in [0, 1]$ represent detection confidence scores. To maintain high recall for long-tail occluded objects, detection thresholding is applied at $s_h \ge 0.08, s_o \ge 0.08$. All valid $(b_h, b_o)$ candidate pairs form proposal set $\mathcal{P}$. Pairs are prioritized by joint confidence $s_h \cdot s_o$.</p>
+    <p class="no-indent">where <i>s<sub>h</sub></i>, <i>s<sub>o</sub></i> &isin; [0, 1] represent detection confidence scores. To maintain high recall for long-tail occluded objects, detection thresholding is applied at <i>s<sub>h</sub></i> &ge; 0.08, <i>s<sub>o</sub></i> &ge; 0.08. All valid (<i>b<sub>h</sub></i>, <i>b<sub>o</sub></i>) candidate pairs form proposal set <i>P</i>. Pairs are prioritized by joint confidence <i>s<sub>h</sub></i> &middot; <i>s<sub>o</sub></i>.</p>
 
     <h3 class="subsec-heading">C. 3-Stream Multi-Crop Visual Encoding</h3>
-    <p>For each candidate pair $(b_h, b_o) \in \mathcal{P}$, we compute the minimum bounding box encompassing both entities (the union crop $b_u = b_h \cup b_o$). Rather than relying solely on the union region, we feed three distinct image crops into a frozen CLIP ViT-B/16 image encoder $\mathcal{E}_v$:</p>
+    <p>For each candidate pair (<i>b<sub>h</sub></i>, <i>b<sub>o</sub></i>) &isin; <i>P</i>, we compute the minimum bounding box encompassing both entities (the union crop <i>b<sub>u</sub></i> = <i>b<sub>h</sub></i> &cup; <i>b<sub>o</sub></i>). Rather than relying solely on the union region, we feed three distinct image crops into a frozen CLIP ViT-B/16 image encoder <i>E<sub>v</sub></i>:</p>
     <div class="eq-box">
-        $f_h = \mathcal{E}_v(\text{crop}(I, b_h)), \; f_o = \mathcal{E}_v(\text{crop}(I, b_o)), \; f_u = \mathcal{E}_v(\text{crop}(I, b_u))$
+        <span class="math-expr"><i>f<sub>h</sub></i> = <i>E<sub>v</sub></i>(crop(<i>I</i>, <i>b<sub>h</sub></i>)), &nbsp; <i>f<sub>o</sub></i> = <i>E<sub>v</sub></i>(crop(<i>I</i>, <i>b<sub>o</sub></i>)), &nbsp; <i>f<sub>u</sub></i> = <i>E<sub>v</sub></i>(crop(<i>I</i>, <i>b<sub>u</sub></i>))</span>
         <span class="eq-num">(2)</span>
     </div>
-    <p class="no-indent">where $f_h, f_o, f_u \in \mathbb{R}^{512}$ are $\ell_2$-normalized feature vectors. The 3-Stream visual representation $f_v$ is constructed via linear projection and concatenation:</p>
+    <p class="no-indent">where <i>f<sub>h</sub></i>, <i>f<sub>o</sub></i>, <i>f<sub>u</sub></i> &isin; &#8477;<sup>512</sup> are &#8467;<sub>2</sub>-normalized feature vectors. The 3-Stream visual representation <i>f<sub>v</sub></i> is constructed via linear projection and concatenation:</p>
     <div class="eq-box">
-        $f_v = \text{LayerNorm}\left( W_h f_h + W_o f_o + W_u f_u \right)$
+        <span class="math-expr"><i>f<sub>v</sub></i> = LayerNorm( <i>W<sub>h</sub>f<sub>h</sub></i> + <i>W<sub>o</sub>f<sub>o</sub></i> + <i>W<sub>u</sub>f<sub>u</sub></i> )</span>
         <span class="eq-num">(3)</span>
     </div>
-    <p class="no-indent">By employing ViT-B/16 with $14 \times 14 = 196$ spatial patch tokens (a $4\times$ token density increase over ViT-B/32's 49 patches), subtle human hand-object contact interfaces are preserved alongside global contextual semantics.</p>
+    <p class="no-indent">By employing ViT-B/16 with 14 &times; 14 = 196 spatial patch tokens (a 4&times; token density increase over ViT-B/32's 49 patches), subtle human hand-object contact interfaces are preserved alongside global contextual semantics.</p>
 
     <h3 class="subsec-heading">D. Continuous 8D Spatial Geometry MLP (&ldquo;The Brain&rdquo;)</h3>
-    <p>To explicitly model the relative spatial configuration of human and object, we construct an 8-dimensional scale- and translation-invariant geometric descriptor $g(b_h, b_o) \in \mathbb{R}^{8}$:</p>
+    <p>To explicitly model the relative spatial configuration of human and object, we construct an 8-dimensional scale- and translation-invariant geometric descriptor <i>g</i>(<i>b<sub>h</sub></i>, <i>b<sub>o</sub></i>) &isin; &#8477;<sup>8</sup>:</p>
     <div class="eq-box">
-        $g = \left[ \frac{x_o^c - x_h^c}{w_h}, \, \frac{y_o^c - y_h^c}{h_h}, \, \frac{w_o}{w_h}, \, \frac{h_o}{h_h}, \, \text{IoU}, \, d_{\text{norm}}, \, \theta_{ho}, \, \ln\left(\frac{A_h}{A_o}\right) \right]$
-        <span class="eq-num">(4)</span>
+        <table class="eq-table">
+            <tr>
+                <td><i>g</i> = [</td>
+                <td><div class="frac"><span class="num"><i>x<sub>o</sub><sup>c</sup></i> &minus; <i>x<sub>h</sub><sup>c</sup></i></span><span class="den"><i>w<sub>h</sub></i></span></div></td>
+                <td>,</td>
+                <td><div class="frac"><span class="num"><i>y<sub>o</sub><sup>c</sup></i> &minus; <i>y<sub>h</sub><sup>c</sup></i></span><span class="den"><i>h<sub>h</sub></i></span></div></td>
+                <td>,</td>
+                <td><div class="frac"><span class="num"><i>w<sub>o</sub></i></span><span class="den"><i>w<sub>h</sub></i></span></div></td>
+                <td>,</td>
+                <td><div class="frac"><span class="num"><i>h<sub>o</sub></i></span><span class="den"><i>h<sub>h</sub></i></span></div></td>
+                <td>, IoU, <i>d</i><sub>norm</sub>, &theta;<sub><i>ho</i></sub>, ln(<div class="frac"><span class="num"><i>A<sub>h</sub></i></span><span class="den"><i>A<sub>o</sub></i></span></div>) ]</td>
+                <td class="eq-num-cell">(4)</td>
+            </tr>
+        </table>
     </div>
-    <p class="no-indent">where $(x^c, y^c)$ are box centroids, $d_{\text{norm}}$ is normalized Euclidean centroid distance, $\theta_{ho}$ is relative polar angle, and $\ln(A_h / A_o)$ captures logarithmic area ratio. The descriptor $g$ is projected through a 2-layer MLP with GELU activations: $f_{\text{geom}} = \text{MLP}_g(g) \in \mathbb{R}^{256}$.</p>
+    <p class="no-indent">where (<i>x<sup>c</sup></i>, <i>y<sup>c</sup></i>) are box centroids, <i>d</i><sub>norm</sub> is normalized Euclidean centroid distance, &theta;<sub><i>ho</i></sub> is relative polar angle, and ln(<i>A<sub>h</sub></i> / <i>A<sub>o</sub></i>) captures logarithmic area ratio. The descriptor <i>g</i> is projected through a 2-layer MLP with GELU activations: <i>f</i><sub>geom</sub> = MLP<sub><i>g</i></sub>(<i>g</i>) &isin; &#8477;<sup>256</sup>.</p>
 
     <h3 class="subsec-heading">E. Soft Continuous Geometric Veto Gate (&ldquo;The Arbiter&rdquo;)</h3>
     <p>Standard VLMs lack geometric verification: if a person and an airplane appear in the same frame, CLIP assigns high semantic affinity to <i>board airplane</i> even when separated by hundreds of meters.</p>
-    <p>Let $\mathcal{V}_{\text{contact}}$ denote physical contact predicates (e.g., <i>hold</i>, <i>ride</i>, <i>sit on</i>, <i>eat</i>, <i>carry</i>) requiring spatial adjacency. In contrast to naive binary thresholds ($\text{IoU} > 0$) that trigger a catastrophic cliff at box boundaries, we formulate the <b>Soft Continuous Geometric Veto Gate</b>:</p>
+    <p>Let <i>V</i><sub>contact</sub> denote physical contact predicates (e.g., <i>hold</i>, <i>ride</i>, <i>sit on</i>, <i>eat</i>, <i>carry</i>) requiring spatial adjacency. In contrast to naive binary thresholds (IoU &gt; 0) that trigger a catastrophic cliff at box boundaries, we formulate the <b>Soft Continuous Geometric Veto Gate</b>:</p>
     <div class="eq-box">
-        $g(v, \text{IoU}, d_{\text{box}}) = \begin{cases} 1.0, & \text{if } v \notin \mathcal{V}_{\text{contact}} \lor \text{IoU} > 0 \\ \exp\left( -\frac{d_{\text{box}}^2}{2\sigma^2} \right), & \text{if } v \in \mathcal{V}_{\text{contact}} \land \text{IoU} = 0 \end{cases}$
-        <span class="eq-num">(5)</span>
+        <table class="eq-table">
+            <tr>
+                <td><i>g</i>(<i>v</i>, IoU, <i>d</i><sub>box</sub>) = &nbsp;</td>
+                <td style="font-size: 26pt; line-height: 1; vertical-align: middle;">{</td>
+                <td style="text-align: left; padding-left: 4pt; vertical-align: middle;">
+                    <div>1.0, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if <i>v</i> &notin; <i>V</i><sub>contact</sub> &nbsp;&or;&nbsp; IoU &gt; 0</div>
+                    <div style="margin-top: 3pt;">exp(&minus;<div class="frac" style="display:inline-flex; vertical-align:middle;"><span class="num"><i>d</i><sub>box</sub><sup>2</sup></span><span class="den">2&sigma;<sup>2</sup></span></div>), &nbsp;&nbsp;&nbsp;&nbsp; if <i>v</i> &isin; <i>V</i><sub>contact</sub> &nbsp;&and;&nbsp; IoU = 0</div>
+                </td>
+                <td class="eq-num-cell">(5)</td>
+            </tr>
+        </table>
     </div>
-    <p class="no-indent">where $d_{\text{box}}$ denotes the normalized Euclidean distance between the nearest edges of $b_h$ and $b_o$, and $\sigma = 0.08$. As illustrated in Fig. 2, adjacent contact pairs ($d_{\text{box}} \approx 0.01$) retain a multiplier of $0.98$, while distant false alarms ($d_{\text{box}} > 0.25$) asymptotically decay to zero. Across the test set, this formulation vetoed 265,189 invalid hypotheses while rescuing 54,532 genuine interactions.</p>
+    <p class="no-indent">where <i>d</i><sub>box</sub> denotes the normalized Euclidean distance between the nearest edges of <i>b<sub>h</sub></i> and <i>b<sub>o</sub></i>, and &sigma; = 0.08. As illustrated in Fig. 2, adjacent contact pairs (<i>d</i><sub>box</sub> &asymp; 0.01) retain a multiplier of 0.98, while distant false alarms (<i>d</i><sub>box</sub> &gt; 0.25) asymptotically decay to zero. Across the test set, this formulation vetoed 265,189 invalid hypotheses while rescuing 54,532 genuine interactions.</p>
 
     <h3 class="subsec-heading">F. Non-Parametric Memory Cache &amp; Residual Blending</h3>
-    <p>To retain fine-grained prototype representations without extensive backpropagation, we construct a non-parametric exemplar memory cache. Key features $k_e = [f_v; f_{\text{geom}}] \in \mathbb{R}^{768}$ and labels $v_e \in \{0, 1\}^{600}$ form support matrices $K_{\text{cache}}$ and $V_{\text{cache}}$.</p>
-    <p>For query feature $q$, affinities are evaluated with temperature scale $\beta$:</p>
+    <p>To retain fine-grained prototype representations without extensive backpropagation, we construct a non-parametric exemplar memory cache. Key features <i>k<sub>e</sub></i> = [<i>f<sub>v</sub></i>; <i>f</i><sub>geom</sub>] &isin; &#8477;<sup>768</sup> and labels <i>v<sub>e</sub></i> &isin; {0, 1}<sup>600</sup> form support matrices <i>K</i><sub>cache</sub> and <i>V</i><sub>cache</sub>.</p>
+    <p>For query feature <i>q</i>, affinities are evaluated with temperature scale &beta;:</p>
     <div class="eq-box">
-        $A = \exp\left( -\beta \cdot (1 - q \cdot K_{\text{cache}}^T) \right)$
+        <span class="math-expr"><i>A</i> = exp( &minus;&beta; &middot; (1 &minus; <i>q</i> &middot; <i>K</i><sub>cache</sub><sup><i>T</i></sup>) )</span>
         <span class="eq-num">(6)</span>
     </div>
-    <p class="no-indent">The cache prediction is $S_{\text{cache}} = A \cdot V_{\text{cache}}$. The final HOI triplet confidence is formulated as a residual blend:</p>
+    <p class="no-indent">The cache prediction is <i>S</i><sub>cache</sub> = <i>A</i> &middot; <i>V</i><sub>cache</sub>. The final HOI triplet confidence is formulated as a residual blend:</p>
     <div class="eq-box">
-        $S_{\text{HOI}}(b_h, b_o, k) = s_h \cdot s_o \cdot g(v, \text{IoU}, d_{\text{box}}) \cdot \left[ (1 - \alpha) S_{\text{vlm}}(k) + \alpha S_{\text{cache}}(k) \right]$
+        <span class="math-expr"><i>S</i><sub>HOI</sub>(<i>b<sub>h</sub></i>, <i>b<sub>o</sub></i>, <i>k</i>) = <i>s<sub>h</sub></i> &middot; <i>s<sub>o</sub></i> &middot; <i>g</i>(<i>v</i>, IoU, <i>d</i><sub>box</sub>) &middot; [ (1 &minus; &alpha;) <i>S</i><sub>vlm</sub>(<i>k</i>) + &alpha; <i>S</i><sub>cache</sub>(<i>k</i>) ]</span>
         <span class="eq-num">(7)</span>
     </div>
-    <p class="no-indent">where $\alpha = 0.35$ and $\beta = 5.5$. Because $K_{\text{cache}}$ is non-parametric, rare class prototypes remain strictly preserved without gradient degradation from head classes.</p>
+    <p class="no-indent">where &alpha; = 0.35 and &beta; = 5.5. Because <i>K</i><sub>cache</sub> is non-parametric, rare class prototypes remain strictly preserved without gradient degradation from head classes.</p>
 
     <!-- Two-Column Span: Benchmark Table I -->
     <div class="span-all">
@@ -588,15 +658,15 @@ table.ieee-table tr.bottom-rule td {
 
     <h2 class="sec-heading">IV. Experimental Evaluation</h2>
     <h3 class="subsec-heading">A. Benchmark Dataset &amp; Implementation Details</h3>
-    <p><b>Dataset:</b> We evaluate on the official HICO-DET benchmark [15], containing 38,118 training images and 9,658 test images across 600 HOI categories (80 COCO objects and 117 verb predicates). Categories are partitioned into Full (600), Rare (155, &lt;10 training instances), and Non-Rare (445, $\ge$10 instances).</p>
-    <p><b>Evaluation Protocol:</b> We compute Mean Average Precision (mAP) under the standard Default setting, requiring human and object box $\text{IoU} \ge 0.5$ with ground truth. In our flagship evaluation on all 9,658 test images, 265,189 spatial hallucinations were suppressed, yielding verified scores of <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>.</p>
+    <p><b>Dataset:</b> We evaluate on the official HICO-DET benchmark [15], containing 38,118 training images and 9,658 test images across 600 HOI categories (80 COCO objects and 117 verb predicates). Categories are partitioned into Full (600), Rare (155, &lt;10 training instances), and Non-Rare (445, &ge;10 instances).</p>
+    <p><b>Evaluation Protocol:</b> We compute Mean Average Precision (mAP) under the standard Default setting, requiring human and object box IoU &ge; 0.5 with ground truth. In our flagship evaluation on all 9,658 test images, 265,189 spatial hallucinations were suppressed, yielding verified scores of <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>.</p>
     <p><b>Hardware and Environment:</b> All training runs were conducted on a single commodity GPU environment (NVIDIA RTX 3050 Ti Laptop / T4 GPU). Offline feature caching and adapter training completed in just <b>17.33 minutes (0.29 GPU-hours)</b>, demonstrating extreme computational efficiency without distributed clusters.</p>
 
     <!-- Figure 2 -->
     <div class="figure-box">
         <img src="__FIG2__" alt="Figure 2: Soft Gate Distance Attenuation">
         <div class="figure-caption">
-            <b>Fig. 2.</b> Physical-Semantic Soft Continuous Geometric Veto Gate. Comparison of the rigid binary cliff ($\text{IoU}=0 \rightarrow 0$) against the continuous Gaussian distance attenuation curve ($g(v, \text{IoU}, d_{\text{box}})$), rescuing 54,532 border-touching interactions.
+            <b>Fig. 2.</b> Physical-Semantic Soft Continuous Geometric Veto Gate. Comparison of the rigid binary cliff (IoU=0 &rarr; 0) against the continuous Gaussian distance attenuation curve (<i>g</i>(<i>v</i>, IoU, <i>d</i><sub>box</sub>)), rescuing 54,532 border-touching interactions.
         </div>
     </div>
 
@@ -608,7 +678,7 @@ table.ieee-table tr.bottom-rule td {
     <div class="figure-box">
         <img src="__FIG3__" alt="Figure 3: Detector and Backbone Ablation">
         <div class="figure-caption">
-            <b>Fig. 3.</b> Detector capacity and vision backbone scaling progression: YOLOv8-nano baseline (22.03%) $\rightarrow$ YOLOv8-medium + Soft Gate (28.23%) $\rightarrow$ ViT-B/16 token density (30.31%).
+            <b>Fig. 3.</b> Detector capacity and vision backbone scaling progression: YOLOv8-nano baseline (22.03%) &rarr; YOLOv8-medium + Soft Gate (28.23%) &rarr; ViT-B/16 token density (30.31%).
         </div>
     </div>
 
@@ -639,7 +709,7 @@ table.ieee-table tr.bottom-rule td {
                 <td>319,803</td>
             </tr>
             <tr>
-                <td style="text-align: left;">+ 3-Stream Encoding ($f_h + f_o + f_u$)</td>
+                <td style="text-align: left;">+ 3-Stream Encoding (<i>f<sub>h</sub></i> + <i>f<sub>o</sub></i> + <i>f<sub>u</sub></i>)</td>
                 <td>22.17%</td>
                 <td>18.57%</td>
                 <td>319,803</td>
@@ -785,8 +855,8 @@ print("HTML written successfully. Launching Playwright Chromium...")
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=r"C:\Program Files\Google\Chrome\Application\chrome.exe")
     page = browser.new_page()
-    page.goto(f"file:///{html_path.replace(os.sep, '/')}", wait_until="networkidle")
-    time.sleep(3.0)
+    page.goto(f"file:///{html_path.replace(os.sep, '/')}", wait_until="load")
+    time.sleep(1.0)
     page.pdf(
         path=OUT_PDF,
         format="Letter",
