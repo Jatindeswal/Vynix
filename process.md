@@ -448,5 +448,17 @@ Option 1 eliminates this representation discrepancy by:
   - Compute Pareto Frontier Plot: 19.35 minutes vs 150 hours.
   - Live CLI prediction demo and review defense Q&A script.
 
+### 9.7 Comprehensive Presentation Review Slide Decks (PowerPoint & HTML5)
+- **PowerPoint Presentation Deck:** `Vynix_Presentation_Review.pptx` (2.28 MB)
+  - Layout: 16:9 Widescreen academic dark navy theme (`#0B0F19`).
+  - Slide Count: 12 structured slides covering Problem Triad, Decoupled Architecture, Continuous Geometric Gate, Long-Tail Inversion (105% Parity), Support-Query Realignment, SOTA Benchmark Table, 5-Stage Waterfall Ablation, Green AI Pareto Frontier, Rollback Safety, and Committee Defense Q&A Cheatsheet.
+  - Embedded Visuals: Publication 300 DPI figures (`fig1`, `fig2`, `fig3`, `fig4`, `comp_fig3`).
+  - Verbatim Speaker Notes: Comprehensive scripts embedded into PowerPoint notes for every slide.
+- **Interactive Standalone HTML5 Slide Deck:** `Vynix_Presentation_Review.html` (3.24 MB)
+  - 100% portable single-file HTML with embedded base64 graphics (offline compatible).
+  - Features: Keyboard navigation (Arrow keys/Space), Fullscreen mode (`F`), Speaker Notes drawer (`S`), Overview grid (`O`/`Esc`), and Print-to-PDF formatting (`Ctrl+P`).
+- **Generation Scripts:** `build_presentation_deck.py` and `build_html_presentation.py`.
+
+
 
 

@@ -7,6 +7,8 @@
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
 [![Open Full Training in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Train_Vynix_Full_Colab.ipynb)
 [![Open Interactive Presentation & Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Interactive_Presentation_and_Benchmark.ipynb)
+[![Presentation Deck (PPTX)](https://img.shields.io/badge/Presentation-PowerPoint%20Deck%20(.pptx)-orange?logo=microsoftpowerpoint)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.pptx)
+[![Interactive Slides (HTML5)](https://img.shields.io/badge/Presentation-Interactive%20HTML5%20Deck-cyan?logo=html5)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.html)
 [![Paper PDF](https://img.shields.io/badge/Paper-PDF%20(IEEE%20Format)-red?logo=adobeacrobatreader)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_IEEE_Research_Paper.pdf)
 
 **Project Vynix** is an open-source, production-grade Human-Object Interaction (HOI) detection system engineered to eliminate Vision-Language Model (VLM) spatial hallucinations using continuous geometric reasoning and few-shot multi-stream visual adaptation.
@@ -235,12 +237,14 @@ Vynix/
 ├── train_vynix_full.py         # Full dataset shard extraction & training pipeline
 ├── test_vynix_pretrained.py    # Standalone benchmark evaluation harness
 ├── list_action.csv             # 600-class HICO-DET taxonomy definitions
-├── saved_models_vitb16/        # Official trained model weights (30.31% mAP)
-│   ├── vynix_full_model.pth    # Trained adapter parameters (Alpha, Beta, Spatial MLP)
-│   ├── vynix_full_cache.pt     # Exemplar visual cache tensor
-│   └── eval_results.json       # Official full test set metrics
-├── saved_models/               # ViT-B/32 baseline model weights (28.23% mAP)
-├── yolov8m.pt                  # YOLOv8 Medium object & agent detector
+├── Vynix_Presentation_Review.pptx # 16:9 Widescreen PowerPoint Presentation Deck (with Speaker Notes)
+├── Vynix_Presentation_Review.html # Standalone interactive HTML5 presentation deck
+├── Vynix_Interactive_Presentation_and_Benchmark.ipynb # Interactive Google Colab dashboard
+├── Vynix_IEEE_Research_Paper.pdf  # Camera-ready IEEE format 2-column paper
+├── saved_models_v2.0/          # ★ Official Vynix 2.0 SOTA Flagship (34.80% mAP)
+├── saved_models_v1.0/          # Official Vynix 1.0 Fallback Baseline (30.31% mAP)
+├── saved_models_vitb16/        # Active production checkpoints
+├── yolov8x.pt                  # YOLOv8 Extra-Large object & agent detector
 ├── README.md                   # Project documentation
 └── requirements.txt            # Package dependencies
 ```
