@@ -422,10 +422,21 @@ Option 1 eliminates this representation discrepancy by:
 3. **Complete Outperformance of Enterprise Supervised SOTA:**
    With 34.80% Full mAP, Vynix outperforms ViCHA (34.33% mAP, 150 GPU-hours), GEN-VLKT (33.75% mAP, 120 GPU-hours), and CDN (31.78% mAP, 96 GPU-hours). Vynix accomplishes this while requiring **< 0.35 GPU-hours** on a single 4 GB consumer laptop GPU, representing a **300× to 500× reduction in compute footprint**.
 
-### 9.5 Complete Fallback Archive Hierarchy
-- `saved_models_vitb16_backup_3031/` -> Original 30.31% mAP baseline checkpoint.
-- `saved_models_vitb16_backup_3171/` -> Phase 8 31.71% mAP intermediate checkpoint.
-- `saved_models_yolov8x_vitb16/` & `saved_models_vitb16/` -> Phase 9 Flagship SOTA checkpoint (34.80% Full mAP, 36.10% Rare mAP).
+### 9.5 Complete Fallback Archive Hierarchy (Vynix 1.0 vs. Vynix 2.0)
+- **Project Vynix 1.0 (Baseline Fallback):**
+  - Architecture: YOLOv8m + CLIP ViT-B/16 + Soft Continuous Geometric Gate.
+  - Performance: **30.31% Full mAP**, **29.71% Rare mAP**, **30.51% Non-Rare mAP**, 265,189 vetoes.
+  - Directories: `saved_models_v1.0/` (junction to `saved_models_vitb16_backup_3031/`), code checkpoint in `backup_baseline_3031/`.
+  - Git Release Tag: [`v1.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v1.0) and `vynix-baseline-30.31` (`git checkout v1.0` guarantees 100% instant rollback).
+- **Intermediate Checkpoint (Phase 8):**
+  - Architecture: YOLOv8x proposals with v1.0 cache + Object Gate + Score Calibration.
+  - Performance: **31.71% Full mAP**, **30.63% Rare mAP**, 272,946 vetoes.
+  - Directory: `saved_models_vitb16_backup_3171/` (Git tag `vynix-flagship-31.71`).
+- **★ Project Vynix 2.0 (Current SOTA Flagship):**
+  - Architecture: Native YOLOv8x proposal-trained cache & adapter + Object Semantic Gate + Score Calibration.
+  - Performance: **34.80% Full mAP**, **36.10% Rare mAP**, **34.37% Non-Rare mAP**, 272,946 vetoes, **105.0% Rare Parity**.
+  - Directories: `saved_models_v2.0/` (junction to `saved_models_yolov8x_vitb16/`) and `saved_models_vitb16/`.
+  - Git Release Tag: [`v2.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v2.0) and `vynix-flagship-34.80`.
 
 ### 9.6 Interactive Presentation & Review Dashboard (Google Colab)
 - Notebook: `Vynix_Interactive_Presentation_and_Benchmark.ipynb`

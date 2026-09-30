@@ -79,18 +79,20 @@ Project Vynix implements a 5-stage decoupled reasoning pipeline:
 
 Evaluated across all **9,658 test images** and all **600 official HOI categories** under default settings:
 
-| Model Architecture | Detector | Vision Backbone | Full mAP (600) | Rare mAP (155) | Non-Rare mAP (445) | Hallucinations Vetoed |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Vynix (Zero-Shot Baseline)** | YOLOv8n | CLIP ViT-B/32 | 22.17% | 18.57% | 23.42% | 319,803 |
-| **Vynix-Adapter (ViT-B/32)** | YOLOv8m | CLIP ViT-B/32 | 28.23% | 28.98% | 27.98% | 265,189 |
-| **Vynix-Adapter (ViT-B/16 Phase 6)** | YOLOv8m | CLIP ViT-B/16 | 30.31% | 29.71% | 30.51% | 265,189 |
-| **Vynix-Opt (Phase 8)** | YOLOv8x | CLIP ViT-B/16 | 31.71% | 30.63% | 32.07% | 272,946 |
-| **★ Vynix Flagship (Phase 9 SOTA)** | **YOLOv8x** | **CLIP ViT-B/16 (Aligned)** | **34.80%** | **36.10%** | **34.37%** | **272,946** |
-| *Vynix 1-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 31.42% | 28.97% | 32.27% | 265,189 |
-| *Vynix 5-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 38.82% | 36.77% | 39.53% | 265,189 |
-| *Vynix 10-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 44.57% | 42.72% | 45.21% | 265,189 |
+| Model Release | Detector | Vision Backbone | Full mAP (600) | Rare mAP (155) | Non-Rare mAP (445) | Hallucinations Vetoed | Release Tag / Weights |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Vynix (Zero-Shot)** | YOLOv8n | CLIP ViT-B/32 | 22.17% | 18.57% | 23.42% | 319,803 | Zero-Shot Prior |
+| **Vynix-Adapter (ViT-B/32)** | YOLOv8m | CLIP ViT-B/32 | 28.23% | 28.98% | 27.98% | 265,189 | Phase 4 Checkpoint |
+| **Vynix 1.0 (Fallback Baseline)** | YOLOv8m | CLIP ViT-B/16 | **30.31%** | **29.71%** | **30.51%** | **265,189** | [`tag: v1.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v1.0) (`saved_models_v1.0/`) |
+| **Vynix-Opt (Phase 8)** | YOLOv8x | CLIP ViT-B/16 | 31.71% | 30.63% | 32.07% | 272,946 | Intermediate Milestone |
+| **★ Vynix 2.0 (Current SOTA Flagship)** | **YOLOv8x** | **CLIP ViT-B/16 (Aligned)** | **34.80%** | **36.10%** | **34.37%** | **272,946** | [`tag: v2.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v2.0) (`saved_models_v2.0/`) |
+| *Vynix 1-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 31.42% | 28.97% | 32.27% | 265,189 | Few-Shot Support |
+| *Vynix 5-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 38.82% | 36.77% | 39.53% | 265,189 | Few-Shot Support |
+| *Vynix 10-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 44.57% | 42.72% | 45.21% | 265,189 | Closed Exemplar SOTA |
 
-> **SOTA Achievement:** Vynix achieves **34.80% Full mAP** and **36.10% Rare mAP**, officially surpassing leading fully supervised transformers like ViCHA (34.33% / 30.14%), GEN-VLKT (33.75% / 29.25%), and CDN (31.78% / 27.55%), while requiring only **19.35 minutes** of training on a single laptop GPU (RTX 3050 Ti) and establishing 105.0% Rare class retention parity!
+> **Release Comparison (v1.0 vs v2.0):**
+> - **Vynix 1.0 (Baseline Fallback):** The rock-solid, fully validated decoupled baseline achieving **30.31% Full mAP** with 97.4% parity, archived permanently in `saved_models_v1.0/` and tag `v1.0` as an immediate rollback guarantee.
+> - **Vynix 2.0 (Current SOTA Flagship):** The breakthrough release trained directly on native `yolov8x.pt` proposals, achieving **34.80% Full mAP** (+4.49% over v1.0) and **36.10% Rare mAP** (+6.39% over v1.0) with **105.0% retention parity** (Rare > Non-Rare), officially outperforming enterprise fully-supervised transformers like ViCHA (34.33%) and GEN-VLKT (33.75%). Active in `saved_models_v2.0/` and tag `v2.0`.
 
 ### 🛡️ Hallucination Veto Impact:
 - **272,946** false-positive contact hallucinations suppressed across the official test set.
