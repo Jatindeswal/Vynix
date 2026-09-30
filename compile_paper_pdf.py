@@ -263,9 +263,8 @@ table.ieee-table tr.bottom-rule td {
     <div class="paper-subtitle">A Computationally Efficient, Grounded Paradigm for Resolving Spatial Hallucinations and Long-Tail Gradient Starvation on HICO-DET</div>
     
     <div class="authors-block">
-        <span class="author-name">Jatin Deswal</span><br>
-        <span class="author-affil">Department of Computer Science and Engineering, Project Vynix Research</span><br>
-        <span>Email: jatin@example.org</span>
+        <span class="author-name">Jatin Deswal, Akarshit Garg, Ayush Sharma</span><br>
+        <span class="author-affil">Department of Computer Science and Engineering, Project Vynix Research</span>
     </div>
 </div>
 
