@@ -5,9 +5,9 @@
 [![PyPI Version](https://img.shields.io/badge/pypi-v1.0.0-blue.svg)](https://pypi.org/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Open Full Training in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Train_Vynix_Full_Colab.ipynb)
-[![Open Academic Literature Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Academic_Literature_Comparison.ipynb)
+[![Open Interactive Presentation & Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Interactive_Presentation_and_Benchmark.ipynb)
+[![Paper PDF](https://img.shields.io/badge/Paper-PDF%20(IEEE%20Format)-red?logo=adobeacrobatreader)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_IEEE_Research_Paper.pdf)
 
 **Project Vynix** is an open-source, production-grade Human-Object Interaction (HOI) detection system engineered to eliminate Vision-Language Model (VLM) spatial hallucinations using continuous geometric reasoning and few-shot multi-stream visual adaptation.
 

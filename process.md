@@ -427,5 +427,15 @@ Option 1 eliminates this representation discrepancy by:
 - `saved_models_vitb16_backup_3171/` -> Phase 8 31.71% mAP intermediate checkpoint.
 - `saved_models_yolov8x_vitb16/` & `saved_models_vitb16/` -> Phase 9 Flagship SOTA checkpoint (34.80% Full mAP, 36.10% Rare mAP).
 
+### 9.6 Interactive Presentation & Review Dashboard (Google Colab)
+- Notebook: `Vynix_Interactive_Presentation_and_Benchmark.ipynb`
+- Features:
+  - Interactive Plotly Bar Chart: HICO-DET SOTA progression (2018–2026).
+  - 5-Stage Ablation Waterfall Chart: Step-by-step gains from 22.03% to 34.80%.
+  - Continuous Soft Geometric Gate Curve: Dynamic visualization of rescued true positives.
+  - Rare vs. Non-Rare Parity Scatter Plot: Highlighting the 105.0% retention ratio.
+  - Compute Pareto Frontier Plot: 19.35 minutes vs 150 hours.
+  - Live CLI prediction demo and review defense Q&A script.
+
 
 
