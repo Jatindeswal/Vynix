@@ -4,5 +4,6 @@
   "mAP_non_rare": 30.505809303316855,
   "vetoes": 265189,
   "detector": "yolov8m.pt",
-  "clip_model": "openai/clip-vit-base-patch16"
+  "clip_model": "openai/clip-vit-base-patch16",
+  "total_test_images": 9658
 }

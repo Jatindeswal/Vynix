@@ -217,18 +217,22 @@ def main():
     print(f"  Vetoes Triggered: {res['vetoes']}")
     print("===========================================================================")
 
-    import json
-    out_json = os.path.join(args.model_dir, "eval_results.json")
-    with open(out_json, "w") as fp:
-        json.dump({
-            "mAP_full": res["mAP_full"],
-            "mAP_rare": res["mAP_rare"],
-            "mAP_non_rare": res["mAP_non_rare"],
-            "vetoes": res["vetoes"],
-            "detector": args.detector_model,
-            "clip_model": args.clip_model
-        }, fp, indent=2)
-    print(f"  ✓ Saved results to {out_json}")
+    if args.limit is None:
+        import json
+        out_json = os.path.join(args.model_dir, "eval_results.json")
+        with open(out_json, "w") as fp:
+            json.dump({
+                "mAP_full": res["mAP_full"],
+                "mAP_rare": res["mAP_rare"],
+                "mAP_non_rare": res["mAP_non_rare"],
+                "vetoes": res["vetoes"],
+                "detector": args.detector_model,
+                "clip_model": args.clip_model,
+                "total_test_images": res["n_images"]
+            }, fp, indent=2)
+        print(f"  ✓ Saved full evaluation results to {out_json}")
+    else:
+        print(f"  (Evaluation run with limit={args.limit}; eval_results.json preserved)")
 
 if __name__ == "__main__":
     main()
