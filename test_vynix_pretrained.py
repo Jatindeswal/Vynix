@@ -291,6 +291,8 @@ def main():
                 "vetoes": res["vetoes"],
                 "detector": args.detector_model,
                 "clip_model": args.clip_model,
+                "det_lambda": args.det_lambda,
+                "obj_gamma": args.obj_gamma if not args.no_obj_gate else 0.0,
                 "total_test_images": res["n_images"]
             }, fp, indent=2)
         print(f"  ✓ Saved full evaluation results to {out_json}")
