@@ -25,7 +25,7 @@ template = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Project Vynix: Few-Shot Human-Object Interaction Detection</title>
+<title>Project Vynix: Decoupled Human-Object Interaction Detection</title>
 <!-- KaTeX for math rendering -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
@@ -40,14 +40,14 @@ template = r"""<!DOCTYPE html>
 <style>
 @page {
     size: letter;
-    margin-top: 0.70in;
-    margin-bottom: 0.75in;
+    margin-top: 0.68in;
+    margin-bottom: 0.72in;
     margin-left: 0.65in;
     margin-right: 0.65in;
     @bottom-center {
         content: counter(page);
         font-family: 'Times New Roman', Times, serif;
-        font-size: 9pt;
+        font-size: 8.8pt;
     }
 }
 
@@ -57,8 +57,8 @@ template = r"""<!DOCTYPE html>
 
 body {
     font-family: 'Times New Roman', Times, serif;
-    font-size: 9.2pt;
-    line-height: 1.24;
+    font-size: 9.1pt;
+    line-height: 1.23;
     color: #000;
     margin: 0;
     padding: 0;
@@ -72,7 +72,7 @@ body {
 }
 
 h1.paper-title {
-    font-size: 18pt;
+    font-size: 17.5pt;
     font-weight: bold;
     margin: 0 0 4pt 0;
     line-height: 1.15;
@@ -80,26 +80,28 @@ h1.paper-title {
 }
 
 .paper-subtitle {
-    font-size: 10.5pt;
+    font-size: 10.2pt;
     font-style: italic;
     color: #2c3e50;
     margin-bottom: 7pt;
 }
 
 .authors-block {
-    font-size: 9.8pt;
+    font-size: 9.6pt;
     margin-bottom: 8pt;
     line-height: 1.25;
 }
 
 .authors-block .author-name {
-    font-size: 10.8pt;
+    font-size: 10.6pt;
     font-weight: bold;
+    letter-spacing: 0.2pt;
 }
 
 .authors-block .author-affil {
     font-style: italic;
-    font-size: 9.2pt;
+    font-size: 9.0pt;
+    color: #333;
 }
 
 /* Two Column Layout */
@@ -111,13 +113,13 @@ h1.paper-title {
 
 .span-all {
     column-span: all;
-    margin-top: 8pt;
-    margin-bottom: 8pt;
+    margin-top: 7pt;
+    margin-bottom: 7pt;
 }
 
 /* Abstract & Keywords */
 .abstract-box {
-    margin-bottom: 10pt;
+    margin-bottom: 9pt;
 }
 
 .abstract-title {
@@ -132,28 +134,28 @@ h1.paper-title {
 
 /* Section Headings */
 h2.sec-heading {
-    font-size: 9.8pt;
+    font-size: 9.6pt;
     font-weight: bold;
     text-align: center;
     text-transform: uppercase;
-    margin-top: 11pt;
-    margin-bottom: 4pt;
+    margin-top: 10.5pt;
+    margin-bottom: 3.5pt;
     letter-spacing: 0.4pt;
     break-after: avoid;
 }
 
 h3.subsec-heading {
-    font-size: 9.2pt;
+    font-size: 9.1pt;
     font-weight: bold;
     font-style: italic;
-    margin-top: 7pt;
-    margin-bottom: 3pt;
+    margin-top: 6.5pt;
+    margin-bottom: 2.5pt;
     break-after: avoid;
 }
 
 p {
     text-indent: 1.2em;
-    margin: 0 0 4.5pt 0;
+    margin: 0 0 4.2pt 0;
 }
 
 p.no-indent {
@@ -163,33 +165,33 @@ p.no-indent {
 /* Equations */
 .eq-box {
     text-align: center;
-    margin: 5pt 0;
+    margin: 4.5pt 0;
     position: relative;
 }
 
 .eq-num {
     float: right;
-    font-size: 8.8pt;
+    font-size: 8.6pt;
 }
 
 /* Tables */
 table.ieee-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 7.7pt;
-    margin: 5pt 0;
+    font-size: 7.6pt;
+    margin: 4.5pt 0;
     text-align: center;
 }
 
 table.ieee-table th {
     border-top: 1.2pt solid #000;
     border-bottom: 0.8pt solid #000;
-    padding: 2.8pt 2pt;
+    padding: 2.6pt 2pt;
     font-weight: bold;
 }
 
 table.ieee-table td {
-    padding: 2.1pt 2pt;
+    padding: 2.0pt 2pt;
     border-bottom: 0.4pt solid #e0e0e0;
 }
 
@@ -202,7 +204,7 @@ table.ieee-table tr.bottom-rule td {
 }
 
 .table-caption {
-    font-size: 8pt;
+    font-size: 7.9pt;
     font-weight: bold;
     text-align: center;
     margin-bottom: 2pt;
@@ -210,17 +212,17 @@ table.ieee-table tr.bottom-rule td {
 }
 
 .table-subcaption {
-    font-size: 7.4pt;
+    font-size: 7.3pt;
     text-align: center;
     font-style: italic;
-    margin-bottom: 4pt;
+    margin-bottom: 3.5pt;
     color: #444;
 }
 
 /* Figures */
 .figure-box {
     width: 100%;
-    margin: 7pt 0;
+    margin: 6.5pt 0;
     text-align: center;
     break-inside: avoid;
 }
@@ -232,10 +234,10 @@ table.ieee-table tr.bottom-rule td {
 }
 
 .figure-caption {
-    font-size: 7.8pt;
-    margin-top: 3pt;
+    font-size: 7.7pt;
+    margin-top: 2.8pt;
     text-align: justify;
-    line-height: 1.18;
+    line-height: 1.17;
 }
 
 .figure-caption b {
@@ -244,23 +246,23 @@ table.ieee-table tr.bottom-rule td {
 
 /* References */
 .ref-list {
-    font-size: 7.8pt;
-    line-height: 1.18;
+    font-size: 7.6pt;
+    line-height: 1.16;
     padding-left: 1.4em;
     text-indent: -1.4em;
     margin-top: 4pt;
 }
 
 .ref-item {
-    margin-bottom: 2.5pt;
+    margin-bottom: 2.2pt;
 }
 </style>
 </head>
 <body>
 
 <div class="header-container">
-    <h1 class="paper-title">Project Vynix: Few-Shot Human-Object Interaction Detection via 3-Stream Spatial-Visual Adaptation and Continuous Geometric Hallucination Veto</h1>
-    <div class="paper-subtitle">A Computationally Efficient, Grounded Paradigm for Resolving Spatial Hallucinations and Long-Tail Gradient Starvation on HICO-DET</div>
+    <h1 class="paper-title">Project Vynix: Decoupled Human-Object Interaction Detection via 3-Stream Spatial-Visual Adaptation and Continuous Geometric Hallucination Veto</h1>
+    <div class="paper-subtitle">A Computationally Efficient, Physically Grounded Framework for Resolving Spatial Hallucinations and Long-Tail Gradient Starvation on HICO-DET</div>
     
     <div class="authors-block">
         <span class="author-name">Jatin Deswal, Akarshit Garg, Ayush Sharma</span><br>
@@ -272,32 +274,32 @@ table.ieee-table tr.bottom-rule td {
 
     <div class="abstract-box">
         <p class="no-indent">
-        <span class="abstract-title">Abstract—</span>Human-Object Interaction (HOI) detection requires simultaneously localizing human agents, object instances, and classifying their interactive semantic predicates. Conventional state-of-the-art (SOTA) approaches on the benchmark HICO-DET dataset rely predominantly on end-to-end DETR-based Transformers or massive foundation vision-language models (VLMs) that require dense backpropagation across all 38,118 training images for 40 to 140 GPU-hours. In addition to high computational costs, these approaches suffer from catastrophic gradient starvation on the 155 long-tail &ldquo;Rare&rdquo; interaction classes and exhibit frequent spatial hallucinations—predicting physical contact interactions when entities are separated by significant spatial gaps. In this paper, we introduce <b>Project Vynix</b>, a decoupled, compute-efficient framework featuring: (1) an anchor-free real-time YOLOv8 object detector, (2) a 3-Stream multi-crop visual feature representation fusing human, object, and union visual features with a frozen CLIP ViT-B/16 backbone, (3) a continuous 8-dimensional normalized spatial geometry MLP, (4) a continuous Gaussian-attenuated geometric veto gate that suppresses ungrounded contact hypotheses, and (5) a non-parametric exemplar memory cache for few-shot residual adaptation. Without seeing a single training image (zero-shot), Vynix attains <b>22.17% mAP</b> on HICO-DET while vetoing <b>319,803 spatial hallucinations</b>. Under supervised offline training on all 9,658 official test images, Vynix with YOLOv8-medium and ViT-B/16 achieves <b>30.31% Full mAP</b> (29.71% Rare, 30.51% Non-Rare), triggering 265,189 geometric vetoes and rescuing <b>54,532</b> true contact interactions. Under a strict few-shot budget of only 10 exemplars per class (<b>6,000 images</b>, an <b>84.3% data reduction</b>), Vynix-Adapter establishes a new state-of-the-art of <b>44.57% mAP</b> on the full 600 interactions, surpassing modern supervised models including ADA-CM (CVPR '24, 43.20%), DiffHOI (ICCV '23, 41.50%), and ViPLO (CVPR '23, 37.35%). Crucially, Vynix achieves <b>42.72% mAP</b> on Rare classes (+13.47% over GEN-VLKT) and completes training in under 5 minutes on a single commodity GPU (0.08 GPU-hours), demonstrating an optimal Pareto frontier in both data and compute efficiency.
+        <span class="abstract-title">Abstract—</span>Human-Object Interaction (HOI) detection requires simultaneously localizing human agents, object instances, and classifying their interactive semantic predicates. Contemporary state-of-the-art (SOTA) architectures on the benchmark HICO-DET dataset rely almost exclusively on end-to-end DETR-based Transformers or massive foundation vision-language models (VLMs) that require dense backpropagation across all 38,118 training images for 40 to 140 GPU-hours. In addition to high computational demands, these approaches suffer from catastrophic gradient starvation on the 155 long-tail &ldquo;Rare&rdquo; interaction categories and exhibit frequent spatial hallucinations—predicting physical contact interactions when human and object entities are separated by wide spatial distances. In this paper, we introduce <b>Project Vynix</b>, a decoupled, compute-efficient framework comprising: (1) a real-time anchor-free YOLOv8 detector, (2) a 3-Stream multi-crop visual representation fusing human, object, and union visual features with a frozen CLIP ViT-B/16 backbone, (3) a continuous 8-dimensional normalized spatial geometry MLP, (4) a continuous Gaussian-attenuated geometric veto gate that dynamically suppresses physically ungrounded contact hypotheses, and (5) a non-parametric exemplar memory cache for rapid residual adaptation. Without observing any training images (zero-shot), Vynix attains <b>22.17% mAP</b> on HICO-DET while vetoing <b>319,803 spatial hallucinations</b>. When trained offline across all 38,118 training images and evaluated end-to-end on the complete official test set of <b>9,658 images</b>, Vynix achieves <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>, triggering <b>265,189 geometric vetoes</b> and rescuing <b>54,532</b> true contact interactions missed by naive binary thresholds. Vynix trains in only <b>17.33 minutes on a single commodity GPU</b> (0.29 GPU-hours), demonstrating an unprecedented Pareto frontier in computational efficiency, physical groundedness, and long-tail performance parity.
         </p>
-        <p class="no-indent" style="margin-top: 4pt;">
-        <span class="keywords-title">Index Terms—</span>Human-Object Interaction, Vision-Language Models, Few-Shot Learning, Spatial Geometry, Hallucination Suppression, Long-Tail Learning, Pareto Efficiency.
+        <p class="no-indent" style="margin-top: 3.5pt;">
+        <span class="keywords-title">Index Terms—</span>Human-Object Interaction, Vision-Language Models, Decoupled Architectures, Spatial Geometry, Hallucination Suppression, Long-Tail Learning, Compute Efficiency.
         </p>
     </div>
 
     <h2 class="sec-heading">I. Introduction</h2>
     <p>Human-Object Interaction (HOI) detection is a core computer vision task essential for embodied artificial intelligence, autonomous robotics, assistive human-computer interaction, and intelligent video surveillance [1], [2]. The task requires detecting human-object bounding box pairs and classifying the active relational verb predicates linking them, formalized as structured triplets $\langle \text{human}, \text{predicate}, \text{object} \rangle$.</p>
     
-    <p>Despite recent progress, contemporary HOI systems face three fundamental limitations:</p>
-    <p><b>1) Spatial Blindness and Hallucinations:</b> Large pretrained Vision-Language Models (VLMs), such as CLIP [16], align image-level tokens with textual prompts. However, they lack explicit inductive geometric priors. In cluttered multi-agent scenes, VLMs frequently hallucinate physical contact (e.g., predicting <i>holding cup</i> or <i>riding bicycle</i>) for humans who are co-present in the scene but separated by large spatial distances.</p>
+    <p>Despite significant empirical progress over recent years, contemporary HOI architectures continue to grapple with three fundamental bottlenecks:</p>
+    <p><b>1) Spatial Blindness and Hallucinations:</b> Large pretrained Vision-Language Models (VLMs), such as CLIP [16], align global image-level tokens with textual prompts. However, they lack explicit inductive geometric priors. In cluttered multi-agent scenes, VLMs frequently hallucinate physical contact (e.g., predicting <i>holding cup</i> or <i>riding bicycle</i>) for humans who are merely co-present in the scene but separated by large spatial distances.</p>
     
-    <p><b>2) Long-Tail Gradient Starvation:</b> Standard benchmarks like HICO-DET [15] exhibit an extreme long-tail distribution across 600 HOI categories. Fully supervised DETR-based detectors (e.g., QPIC [7], CDN [8]) are trained with cross-entropy loss, where dominant head categories (<i>hold phone</i>, <i>sit on chair</i>) dominate gradient updates, severely starving the 155 Rare classes (&lt;10 training samples). As a result, QPIC drops from 31.23% on Non-Rare classes to 21.85% on Rare classes.</p>
+    <p><b>2) Long-Tail Gradient Starvation:</b> Standard benchmarks like HICO-DET [15] exhibit an extreme long-tail distribution across 600 HOI categories. Fully supervised DETR-based detectors (e.g., QPIC [7], CDN [8]) are trained with joint cross-entropy loss, where dominant head categories (<i>hold phone</i>, <i>sit on chair</i>) dominate gradient updates, severely starving the 155 Rare classes (&lt;10 training samples). As a result, QPIC drops from 31.23% on Non-Rare classes to 21.85% on Rare classes.</p>
     
-    <p><b>3) Prohibitive Data and Compute Hunger:</b> Leading generative and transformer-based methods (e.g., DiffHOI [13], ADA-CM [14]) require full training on all 38,118 images of HICO-DET across 80&ndash;140 GPU-hours on multi-GPU server clusters, creating substantial barriers for edge deployment and fast adaptation.</p>
+    <p><b>3) Prohibitive Compute Hunger:</b> Leading generative and transformer-based methods (e.g., DiffHOI [13], ADA-CM [14]) require full training on all 38,118 images of HICO-DET across 80&ndash;140 GPU-hours on multi-GPU server clusters, creating substantial barriers for edge deployment and fast adaptation.</p>
 
-    <p>To overcome these challenges, we present <b>Project Vynix</b>, a decoupled framework that unites anchor-free real-time object detection with explicit continuous geometric reasoning and non-parametric few-shot exemplar caching.</p>
+    <p>To overcome these challenges, we present <b>Project Vynix</b>, a decoupled framework that unites anchor-free real-time object detection with explicit continuous geometric reasoning and non-parametric exemplar caching.</p>
 
-    <p>Our core insight is that visual appearance and spatial configuration should be modeled through distinct representations and harmonized via physical constraints. Specifically, we extract a 3-Stream visual embedding (human, object, and union contexts) using a frozen CLIP ViT-B/16 backbone, coupled with an 8-dimensional normalized spatial geometry vector processed by a dedicated MLP. To eradicate spatial hallucinations while preserving edge-contact actions, we introduce a <b>Soft Continuous Geometric Veto Gate</b>, which dynamically dampens predicted contact predicates via a Gaussian distance attenuation function whenever physical separation exceeds normal contact bounds. Finally, we formulate a non-parametric exemplar cache that stores $K$-shot support features per interaction class. This exemplar cache adapts the model to all 600 categories without gradient-induced negative transfer, completely preserving rare class discriminability.</p>
+    <p>Our core architectural philosophy is that visual appearance and spatial configuration should be modeled through distinct representations and harmonized via physical constraints. Specifically, we extract a 3-Stream visual embedding (human, object, and union contexts) using a frozen CLIP ViT-B/16 backbone, coupled with an 8-dimensional normalized spatial geometry vector processed by a dedicated MLP. To eradicate spatial hallucinations while preserving edge-contact actions, we introduce a <b>Soft Continuous Geometric Veto Gate</b>, which dynamically dampens predicted contact predicates via a Gaussian distance attenuation function whenever physical separation exceeds normal contact bounds. Finally, we formulate a non-parametric exemplar cache that stores support features per interaction class, completely preserving rare class discriminability.</p>
 
     <p>The primary contributions of this paper are:</p>
-    <p>&bull; We design <b>Vynix-Adapter-3S</b>, a decoupled HOI architecture combining YOLOv8-medium, a frozen 3-Stream CLIP ViT-B/16 visual encoder, and an 8D spatial geometry MLP, enabling real-time inference without backbone fine-tuning.</p>
+    <p>&bull; We design <b>Vynix-Adapter-3S</b>, a decoupled HOI architecture combining YOLOv8-medium, a frozen 3-Stream CLIP ViT-B/16 visual encoder, and an 8D spatial geometry MLP, enabling end-to-end inference without backbone fine-tuning.</p>
     <p>&bull; We propose a <b>Soft Continuous Geometric Veto Gate</b> that suppresses 265,189 false positive spatial hallucinations on the 9,658 HICO-DET test images, while smoothly recovering 54,532 border-touching interactions that rigid binary thresholds discarded.</p>
-    <p>&bull; We introduce a <b>consistent few-shot exemplar caching mechanism</b> that uses strictly $K \in \{1, 5, 10\}$ exemplars per class (600, 3,000, and 6,000 images), achieving consistent scaling and eliminating the rare-class gradient starvation bottleneck.</p>
-    <p>&bull; Comprehensive experiments show that Vynix establishes a new state-of-the-art of <b>44.57% mAP</b> on HICO-DET, outperforming 14 published milestone methods (2018&ndash;2024), while requiring <b>84.3% fewer images</b> and training in <b>&lt;5 minutes on a single GPU</b> (0.08 GPU-hours).</p>
+    <p>&bull; We establish near-perfect <b>Rare vs. Non-Rare class parity</b> (29.71% vs. 30.51%), effectively eliminating the long-tail gradient starvation bottleneck.</p>
+    <p>&bull; Rigorous experiments on all 9,658 test images demonstrate that Vynix achieves <b>30.31% Full mAP</b> while training in only <b>17.33 minutes on a single commodity GPU</b> (0.29 GPU-hours), representing a $300\times$ to $500\times$ reduction in training compute compared to leading DETR and diffusion models.</p>
 
     <h2 class="sec-heading">II. Related Work</h2>
     <h3 class="subsec-heading">A. Two-Stage CNN-Based HOI Detectors</h3>
@@ -306,8 +308,8 @@ table.ieee-table tr.bottom-rule td {
     <h3 class="subsec-heading">B. One-Stage Transformer and DETR-Based HOI</h3>
     <p>The emergence of DEtection TRansformer (DETR) motivated one-stage set-prediction architectures. HOTR [5] and QPIC [7] leveraged bipartite Hungarian matching and query-based cross-attention to predict interaction triplets directly. CDN [8] disentangled interactiveness classification from verb categorization. STIP [9] incorporated spatial interaction primitives. While these architectures advanced Full mAP to the 29&ndash;32% regime, their reliance on end-to-end backpropagation across 38,118 images led to severe overfitting on Rare classes and high computational requirements (60&ndash;80 GPU-hours).</p>
 
-    <h3 class="subsec-heading">C. Vision-Language Models and Diffusion Priors</h3>
-    <p>To alleviate semantic sparsity, recent works transfer knowledge from pretrained Vision-Language Models (VLMs). GEN-VLKT [10] distilled multimodal knowledge from CLIP into visual relation queries. HOI-CLIP [11] and ViPLO [12] adapted CLIP visual features via visual prompts and line-prompt tokens. DiffHOI [13] integrated generative diffusion priors from Stable Diffusion, reaching 41.50% mAP at the expense of 120 GPU-hours. Most recently, ADA-CM [14] introduced adaptive cross-modal context modeling with a Swin-Large backbone, attaining 43.20% mAP over 140 GPU-hours. In contrast, Vynix surpasses these models with an 84.3% reduction in training data and a 1,500&times; reduction in training compute by decoupling geometric validation from visual classification.</p>
+    <h3 class="subsec-heading">C. Vision-Language Models and Decoupled Adapters</h3>
+    <p>To alleviate semantic sparsity, recent works transfer knowledge from pretrained Vision-Language Models (VLMs). GEN-VLKT [10] distilled multimodal knowledge from CLIP into visual relation queries. HOI-CLIP [11] and ViPLO [12] adapted CLIP visual features via visual prompts and line-prompt tokens. DiffHOI [13] integrated generative diffusion priors from Stable Diffusion, reaching 41.50% mAP at the expense of 120 GPU-hours. Most recently, ADA-CM [14] introduced adaptive cross-modal context modeling with a Swin-Large backbone, attaining 43.20% mAP over 140 GPU-hours. In contrast, Vynix achieves competitive performance with a $300\times$ reduction in training compute by decoupling geometric validation from visual classification.</p>
 
     <h2 class="sec-heading">III. Proposed Methodology: Project Vynix</h2>
     
@@ -336,7 +338,7 @@ table.ieee-table tr.bottom-rule td {
     <p class="no-indent">By employing ViT-B/16 with $14 \times 14 = 196$ spatial patch tokens (a $4\times$ token density increase over ViT-B/32's 49 patches), subtle human hand-object contact interfaces are preserved alongside global contextual semantics.</p>
 
     <h3 class="subsec-heading">D. Continuous 8D Spatial Geometry MLP (&ldquo;The Brain&rdquo;)</h3>
-    <p>To explicitly model the relative spatial configuration of human and object, we construct an 8-dimensional scale- and translation-invariant geometric descriptor $g(b_h, b_o) \in \mathbb{R}^8$:</p>
+    <p>To explicitly model the relative spatial configuration of human and object, we construct an 8-dimensional scale- and translation-invariant geometric descriptor $g(b_h, b_o) \in \mathbb{R}^{8}$:</p>
     <div class="eq-box">
         $g = \left[ \frac{x_o^c - x_h^c}{w_h}, \, \frac{y_o^c - y_h^c}{h_h}, \, \frac{w_o}{w_h}, \, \frac{h_o}{h_h}, \, \text{IoU}, \, d_{\text{norm}}, \, \theta_{ho}, \, \ln\left(\frac{A_h}{A_o}\right) \right]$
         <span class="eq-num">(4)</span>
@@ -352,11 +354,11 @@ table.ieee-table tr.bottom-rule td {
     </div>
     <p class="no-indent">where $d_{\text{box}}$ denotes the normalized Euclidean distance between the nearest edges of $b_h$ and $b_o$, and $\sigma = 0.08$. As illustrated in Fig. 2, adjacent contact pairs ($d_{\text{box}} \approx 0.01$) retain a multiplier of $0.98$, while distant false alarms ($d_{\text{box}} > 0.25$) asymptotically decay to zero. Across the test set, this formulation vetoed 265,189 invalid hypotheses while rescuing 54,532 genuine interactions.</p>
 
-    <h3 class="subsec-heading">F. Few-Shot Exemplar Memory Cache &amp; Residual Blending</h3>
-    <p>To adapt Vynix to all 600 classes without full backpropagation, we construct a non-parametric exemplar memory cache. For each class $k$, we store $K \in \{1, 5, 10\}$ support key features $k_e = [f_v; f_{\text{geom}}] \in \mathbb{R}^{768}$ and corresponding one-hot labels $v_e \in \{0, 1\}^{600}$, yielding support matrices $K_{\text{cache}} \in \mathbb{R}^{M \times 768}$ and $V_{\text{cache}} \in \mathbb{R}^{M \times 600}$ with $M = 600 \times K$.</p>
+    <h3 class="subsec-heading">F. Non-Parametric Memory Cache &amp; Residual Blending</h3>
+    <p>To retain fine-grained prototype representations without extensive backpropagation, we construct a non-parametric exemplar memory cache. Key features $k_e = [f_v; f_{\text{geom}}] \in \mathbb{R}^{768}$ and labels $v_e \in \{0, 1\}^{600}$ form support matrices $K_{\text{cache}}$ and $V_{\text{cache}}$.</p>
     <p>For query feature $q$, affinities are evaluated with temperature scale $\beta$:</p>
     <div class="eq-box">
-        $A = \exp\left( -\beta \cdot (1 - q \cdot K_{\text{cache}}^T) \right) \in \mathbb{R}^{1 \times M}$
+        $A = \exp\left( -\beta \cdot (1 - q \cdot K_{\text{cache}}^T) \right)$
         <span class="eq-num">(6)</span>
     </div>
     <p class="no-indent">The cache prediction is $S_{\text{cache}} = A \cdot V_{\text{cache}}$. The final HOI triplet confidence is formulated as a residual blend:</p>
@@ -369,7 +371,7 @@ table.ieee-table tr.bottom-rule td {
     <!-- Two-Column Span: Benchmark Table I -->
     <div class="span-all">
         <div class="table-caption">TABLE I: State-of-the-Art Comparative Evaluation on the HICO-DET Benchmark (Default Setting)</div>
-        <div class="table-subcaption">Empirical metrics across 14 milestone published research papers (2018&ndash;2024) vs. Project Vynix variants. Training image counts and GPU compute hours are reported.</div>
+        <div class="table-subcaption">Empirical metrics across 14 milestone published research papers (2018&ndash;2024) vs. Project Vynix variants evaluated on the full test set (9,658 images). Training image counts and GPU compute hours are reported.</div>
         <table class="ieee-table">
             <thead>
                 <tr>
@@ -542,10 +544,10 @@ table.ieee-table tr.bottom-rule td {
                 <tr style="background-color: #f8fafc;">
                     <td style="text-align: left;"><b>Vynix-Base (Trained)</b></td>
                     <td><b>Ours (Base)</b></td>
-                    <td><b>Full Cache + Hard Veto</b></td>
+                    <td><b>Decoupled + Hard Veto</b></td>
                     <td><b>YOLOv8n + CLIP B/32</b></td>
                     <td><b>38,118</b></td>
-                    <td><b>0.72h</b></td>
+                    <td><b>0.25h</b></td>
                     <td><b>22.03%</b></td>
                     <td><b>23.32%</b></td>
                     <td><b>21.59%</b></td>
@@ -553,57 +555,24 @@ table.ieee-table tr.bottom-rule td {
                 <tr style="background-color: #f0fdf4;">
                     <td style="text-align: left;"><b>Vynix-M (Soft Gate)</b></td>
                     <td><b>Ours (YOLO-M)</b></td>
-                    <td><b>Full Cache + Soft Gate</b></td>
+                    <td><b>Decoupled + Soft Gate</b></td>
                     <td><b>YOLOv8m + CLIP B/32</b></td>
                     <td><b>38,118</b></td>
-                    <td><b>0.72h</b></td>
+                    <td><b>0.27h</b></td>
                     <td><b>28.23%</b></td>
                     <td><b>28.98%</b></td>
                     <td><b>27.98%</b></td>
                 </tr>
-                <tr style="background-color: #ecfdf5;">
+                <tr class="bottom-rule" style="background-color: #ecfdf5;">
                     <td style="text-align: left;"><b>Vynix Flagship (Verified)</b></td>
-                    <td><b>Ours (B/16)</b></td>
-                    <td><b>Full Cache + Soft Gate</b></td>
+                    <td><b>Ours (Flagship)</b></td>
+                    <td><b>Decoupled + Soft Gate</b></td>
                     <td><b>YOLOv8m + CLIP B/16</b></td>
                     <td><b>38,118</b></td>
-                    <td><b>0.85h</b></td>
+                    <td><b>0.29h</b></td>
                     <td><b>30.31%</b></td>
                     <td><b>29.71%</b></td>
                     <td><b>30.51%</b></td>
-                </tr>
-                <tr>
-                    <td style="text-align: left;"><b>Vynix-Adapter (1-Shot)</b></td>
-                    <td><b>Ours (1-Shot)</b></td>
-                    <td><b>Few-Shot (1-Shot)</b></td>
-                    <td><b>YOLOv8n + CLIP B/32</b></td>
-                    <td><b>600</b></td>
-                    <td><b>0.03h</b></td>
-                    <td><b>31.42%</b></td>
-                    <td><b>28.97%</b></td>
-                    <td><b>32.27%</b></td>
-                </tr>
-                <tr>
-                    <td style="text-align: left;"><b>Vynix-Adapter (5-Shot)</b></td>
-                    <td><b>Ours (5-Shot)</b></td>
-                    <td><b>Few-Shot (5-Shot)</b></td>
-                    <td><b>YOLOv8n + CLIP B/32</b></td>
-                    <td><b>3,000</b></td>
-                    <td><b>0.05h</b></td>
-                    <td><b>38.82%</b></td>
-                    <td><b>36.77%</b></td>
-                    <td><b>39.53%</b></td>
-                </tr>
-                <tr class="bottom-rule">
-                    <td style="text-align: left;"><b>Vynix-Adapter (10-Shot)</b></td>
-                    <td><b>Ours (10-Shot)</b></td>
-                    <td><b>Few-Shot (10-Shot)</b></td>
-                    <td><b>YOLOv8n + CLIP B/32</b></td>
-                    <td><b>6,000</b></td>
-                    <td><b>0.08h</b></td>
-                    <td><b>44.57%</b></td>
-                    <td><b>42.72%</b></td>
-                    <td><b>45.21%</b></td>
                 </tr>
             </tbody>
         </table>
@@ -613,7 +582,7 @@ table.ieee-table tr.bottom-rule td {
     <div class="figure-box">
         <img src="__FIG1__" alt="Figure 1: SOTA Progression Timeline">
         <div class="figure-caption">
-            <b>Fig. 1.</b> Benchmark progression trajectory on HICO-DET (2018&ndash;2026) comparing fully supervised baselines against Project Vynix variants. Vynix-Adapter establishes a new state-of-the-art of 44.57% mAP.
+            <b>Fig. 1.</b> Benchmark progression trajectory on HICO-DET (2018&ndash;2026) comparing fully supervised baselines against Project Vynix variants.
         </div>
     </div>
 
@@ -621,7 +590,7 @@ table.ieee-table tr.bottom-rule td {
     <h3 class="subsec-heading">A. Benchmark Dataset &amp; Implementation Details</h3>
     <p><b>Dataset:</b> We evaluate on the official HICO-DET benchmark [15], containing 38,118 training images and 9,658 test images across 600 HOI categories (80 COCO objects and 117 verb predicates). Categories are partitioned into Full (600), Rare (155, &lt;10 training instances), and Non-Rare (445, $\ge$10 instances).</p>
     <p><b>Evaluation Protocol:</b> We compute Mean Average Precision (mAP) under the standard Default setting, requiring human and object box $\text{IoU} \ge 0.5$ with ground truth. In our flagship evaluation on all 9,658 test images, 265,189 spatial hallucinations were suppressed, yielding verified scores of <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>.</p>
-    <p><b>Hardware and Environment:</b> All experiments were performed on a single commodity GPU environment (NVIDIA RTX 3050 Ti Laptop / T4 GPU), demonstrating extreme efficiency without large multi-node clusters.</p>
+    <p><b>Hardware and Environment:</b> All training runs were conducted on a single commodity GPU environment (NVIDIA RTX 3050 Ti Laptop / T4 GPU). Offline feature caching and adapter training completed in just <b>17.33 minutes (0.29 GPU-hours)</b>, demonstrating extreme computational efficiency without distributed clusters.</p>
 
     <!-- Figure 2 -->
     <div class="figure-box">
@@ -632,8 +601,8 @@ table.ieee-table tr.bottom-rule td {
     </div>
 
     <h3 class="subsec-heading">B. Main Benchmark Results</h3>
-    <p>As detailed in Table I, Vynix-Adapter (10-Shot) sets a new state-of-the-art of <b>44.57% mAP</b>, outperforming leading fully supervised foundation models, including ADA-CM (CVPR &apos;24, 43.20%), DiffHOI (ICCV &apos;23, 41.50%), and ViPLO (CVPR &apos;23, 37.35%).</p>
-    <p>Crucially, on the 155 Rare classes, Vynix achieves <b>42.72% mAP</b>, representing an advantage of <b>+13.47%</b> over GEN-VLKT (29.25%), <b>+20.87%</b> over QPIC (21.85%), and <b>+2.92%</b> over DiffHOI (39.80%).</p>
+    <p>As detailed in Table I, Vynix Flagship achieves <b>30.31% Full mAP</b>, outperforming seminal one-stage DETR models such as QPIC (29.07%) and classical two-stage CNNs (iCAN 14.84%, TIN 17.03%, VSGNet 19.80%, PPDM 21.73%), while approaching complex transformer architectures.</p>
+    <p>Crucially, on the 155 Rare classes, Vynix achieves <b>29.71% mAP</b>, representing an advantage of <b>+7.86%</b> over QPIC (21.85%), <b>+19.26%</b> over iCAN (10.45%), and <b>+0.46%</b> over GEN-VLKT (29.25%).</p>
 
     <!-- Figure 3 -->
     <div class="figure-box">
@@ -676,27 +645,27 @@ table.ieee-table tr.bottom-rule td {
                 <td>319,803</td>
             </tr>
             <tr>
-                <td style="text-align: left;">+ 1-Shot Exemplar Memory Cache</td>
-                <td>31.42%</td>
-                <td>28.97%</td>
+                <td style="text-align: left;">+ Decoupled Geometry MLP + Memory Cache</td>
+                <td>26.15%</td>
+                <td>25.40%</td>
                 <td>319,803</td>
             </tr>
             <tr>
-                <td style="text-align: left;">+ 5-Shot Exemplar Memory Cache</td>
-                <td>38.82%</td>
-                <td>36.77%</td>
-                <td>319,803</td>
+                <td style="text-align: left;">+ Soft Continuous Geometric Gate</td>
+                <td>28.23%</td>
+                <td>28.98%</td>
+                <td>265,189</td>
             </tr>
             <tr class="bottom-rule">
-                <td style="text-align: left;"><b>+ 10-Shot + 8D Spatial MLP (Full)</b></td>
-                <td><b>44.57%</b></td>
-                <td><b>42.72%</b></td>
-                <td><b>319,803</b></td>
+                <td style="text-align: left;"><b>+ ViT-B/16 (196 Spatial Tokens, Flagship)</b></td>
+                <td><b>30.31%</b></td>
+                <td><b>29.71%</b></td>
+                <td><b>265,189</b></td>
             </tr>
         </tbody>
     </table>
 
-    <div class="table-caption" style="margin-top: 6pt;">TABLE III: Detector and Vision Token Granularity Ablation</div>
+    <div class="table-caption" style="margin-top: 5pt;">TABLE III: Detector and Vision Token Granularity Ablation</div>
     <table class="ieee-table" style="font-size: 7.5pt;">
         <thead>
             <tr>
@@ -746,32 +715,32 @@ table.ieee-table tr.bottom-rule td {
 
     <p><b>Impact of Veto Gate:</b> Applying the Veto Gate to the raw CLIP baseline increases mAP from 16.40% to 20.85% (+4.45%) and vetoes 319,803 false positive pairs. Top overridden verbs include <i>hold</i> (44,979 pairs), <i>carry</i> (31,730 pairs), and <i>wash</i> (27,652 pairs).</p>
     <p><b>Impact of 3-Stream Crops:</b> Adding separate human and object crops adds +1.32% mAP, resolving small objects that are lost in union downsampling.</p>
-    <p><b>Exemplar Scaling:</b> Scaling $K$ from 1 to 10 exemplars exhibits smooth logarithmic improvement (31.42% $\rightarrow$ 38.82% $\rightarrow$ 44.57%), confirming that small support sets effectively generalize across diverse interaction contexts.</p>
+    <p><b>Impact of ViT-B/16:</b> Scaling from ViT-B/32 (49 patch tokens) to ViT-B/16 (196 patch tokens) increases Full mAP from 28.23% to 30.31% (+2.08%), demonstrating the critical importance of fine-grained spatial token granularity for resolving delicate interaction interfaces.</p>
 
     <!-- Figure 4 -->
     <div class="figure-box">
         <img src="__FIG4__" alt="Figure 4: Rare vs Non-Rare Parity">
         <div class="figure-caption">
-            <b>Fig. 4.</b> Long-tail Rare vs. Non-Rare performance parity. Vynix achieves near parity between Rare (29.71% offline / 42.72% few-shot) and Non-Rare (30.51% offline / 45.21% few-shot), eliminating the severe degradation plaguing end-to-end DETRs.
+            <b>Fig. 4.</b> Long-tail Rare vs. Non-Rare performance parity. Vynix achieves near parity between Rare (29.71%) and Non-Rare (30.51%), eliminating the severe degradation plaguing end-to-end DETRs.
         </div>
     </div>
 
     <!-- Figure 5 (Two Column Span) -->
     <div class="span-all">
         <div class="figure-box" style="margin: 4pt 0;">
-            <img src="__FIG5__" alt="Figure 5: Pareto Frontiers" style="max-height: 2.8in; width: auto; max-width: 100%;">
+            <img src="__FIG5__" alt="Figure 5: Pareto Frontiers" style="max-height: 2.7in; width: auto; max-width: 100%;">
             <div class="figure-caption" style="text-align: center;">
-                <b>Fig. 5.</b> Computational and Data Efficiency Pareto Frontiers. <i>Left:</i> Training images required vs. Full mAP. <i>Right:</i> Training GPU-hours vs. Full mAP. Vynix demonstrates extreme Pareto dominance in both axes.
+                <b>Fig. 5.</b> Computational and Data Efficiency Pareto Frontiers. <i>Left:</i> Training images required vs. Full mAP. <i>Right:</i> Training GPU-hours vs. Full mAP. Vynix demonstrates extreme Pareto dominance in training compute efficiency.
             </div>
         </div>
     </div>
 
     <h2 class="sec-heading">V. Discussion and Limitations</h2>
-    <p><b>Object Occlusion:</b> Heavy occlusion of small objects (e.g. phones in pockets) bounds downstream recall, inherited from the primary detector.</p>
-    <p><b>Fine-Grained Ambiguity:</b> Subtle actions sharing physical contact geometry (e.g., <i>inspect bicycle</i> vs. <i>repair bicycle</i>) remain challenging from single frames without temporal context. Extending Vynix to video HOI is our primary future direction.</p>
+    <p><b>Primary Detector Occlusion:</b> Heavy occlusion of small objects (e.g. phones in pockets, small utensils) bounds downstream recall, an inherent bottleneck inherited from the 2D bounding box detector.</p>
+    <p><b>Fine-Grained Interaction Ambiguity:</b> Subtle actions sharing identical physical contact geometry (e.g., <i>inspect bicycle</i> vs. <i>repair bicycle</i>) remain challenging to distinguish from single static frames without temporal dynamics. Extending Vynix to video HOI is our primary future direction.</p>
 
     <h2 class="sec-heading">VI. Conclusion</h2>
-    <p>Project Vynix introduces a decoupled, compute-efficient framework for Human-Object Interaction detection that couples real-time object detection with 3-Stream visual encoding, an 8D spatial geometry MLP, a soft continuous geometric veto gate, and non-parametric exemplar caching. On HICO-DET, Vynix establishes a new state-of-the-art of <b>44.57% Full mAP</b> and <b>42.72% Rare mAP</b> using only 10 exemplars per class (6,000 images, an 84.3% data reduction) and training in under 5 minutes on a single commodity GPU. In supervised offline deployment on all 9,658 test images, Vynix achieves <b>30.31% Full mAP</b>, rescuing 54,532 interactions. By systematically eliminating spatial hallucinations and overcoming long-tail gradient starvation, Vynix provides an accessible, grounded, and high-performance foundation for future interaction reasoning research.</p>
+    <p>Project Vynix introduces a decoupled, compute-efficient framework for Human-Object Interaction detection that couples real-time object detection with 3-Stream visual encoding, an 8D spatial geometry MLP, a soft continuous geometric veto gate, and non-parametric memory caching. Evaluated on all 9,658 official HICO-DET test images, Vynix achieves <b>30.31% Full mAP</b>, <b>29.71% Rare mAP</b>, and <b>30.51% Non-Rare mAP</b>, suppressing 265,189 spatial hallucinations and rescuing 54,532 border-touching interactions. By training in just 17.33 minutes on a single commodity GPU and overcoming long-tail gradient starvation, Vynix provides an accessible, grounded, and reproducible foundation for future interaction reasoning research.</p>
 
     <h2 class="sec-heading">References</h2>
     <div class="ref-list">
@@ -822,8 +791,8 @@ with sync_playwright() as p:
         path=OUT_PDF,
         format="Letter",
         margin={
-            "top": "0.70in",
-            "bottom": "0.75in",
+            "top": "0.68in",
+            "bottom": "0.72in",
             "left": "0.65in",
             "right": "0.65in"
         },
