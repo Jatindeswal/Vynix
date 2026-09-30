@@ -33,9 +33,9 @@ FIGURE_FILES = [
     ("fig2_soft_gate_distance_attenuation.png",
      "Fig. 2. Comparison between the rigid binary cliff (IoU=0 → 0) and the continuous Gaussian distance attenuation curve, rescuing 54,532 border-touching interactions."),
     ("fig3_detector_and_backbone_ablation.png",
-     "Fig. 3. Step-by-step performance gains from YOLOv8-nano (22.03%) to YOLOv8-medium + Soft Gate (28.23%) to ViT-B/16 token density (30.31%)."),
+     "Fig. 3. Step-by-step performance gains from YOLOv8-nano (22.03%) to YOLOv8-medium + Soft Gate (28.23%) to ViT-B/16 (30.31%) to Flagship YOLOv8x + Gate + Calibration (31.71%)."),
     ("fig4_rare_vs_nonrare_recovery.png",
-     "Fig. 4. Overcoming long-tail gradient starvation: Rare mAP (29.71%) achieves near parity with Non-Rare (30.51%)."),
+     "Fig. 4. Overcoming long-tail gradient starvation: Rare mAP (30.63%) achieves near parity with Non-Rare (32.07%)."),
     ("comp_fig3_compute_and_data_efficiency.png",
      "Fig. 5. Computational and Data Efficiency Pareto Frontiers. Left: Training images vs Full mAP. Right: GPU training hours vs Full mAP."),
 ]
@@ -343,8 +343,8 @@ def generate_paper():
         "Without observing any training images (zero-shot), Vynix attains 22.17% mAP on HICO-DET "
         "while vetoing 319,803 spatial hallucinations. When trained offline across all 38,118 "
         "training images and evaluated end-to-end on the complete official test set of 9,658 images, "
-        "Vynix achieves 30.31% Full mAP, 29.71% Rare mAP, and 30.51% Non-Rare mAP, triggering "
-        "265,189 geometric vetoes and rescuing 54,532 true contact interactions missed by naive "
+        "Vynix achieves 31.71% Full mAP, 30.63% Rare mAP, and 32.07% Non-Rare mAP, triggering "
+        "272,946 geometric vetoes and rescuing 54,532 true contact interactions missed by naive "
         "binary thresholds. Vynix trains in only 17.33 minutes on a single commodity GPU "
         "(0.29 GPU-hours), demonstrating an unprecedented Pareto frontier in computational "
         "efficiency, physical groundedness, and long-tail performance parity."
@@ -434,9 +434,9 @@ def generate_paper():
         "We propose a Soft Continuous Geometric Veto Gate that suppresses 265,189 false positive "
         "spatial hallucinations on the 9,658 HICO-DET test images, while smoothly recovering 54,532 "
         "border-touching interactions that rigid binary thresholds discarded.",
-        "We establish near-perfect Rare vs. Non-Rare class parity (29.71% vs. 30.51%), effectively "
+        "We establish near-perfect Rare vs. Non-Rare class parity (30.63% vs. 32.07%), effectively "
         "eliminating the long-tail gradient starvation bottleneck.",
-        "Rigorous experiments on all 9,658 test images demonstrate that Vynix achieves 30.31% Full "
+        "Rigorous experiments on all 9,658 test images demonstrate that Vynix achieves 31.71% Full "
         "mAP while training in only 17.33 minutes on a single commodity GPU (0.29 GPU-hours), "
         "representing a 300× to 500× reduction in training compute compared to leading DETR and "
         "diffusion models."
@@ -604,8 +604,8 @@ def generate_paper():
     add_body_text(doc,
         "Evaluation Protocol: We compute Mean Average Precision (mAP) under the standard Default "
         "setting, requiring human and object box IoU ≥ 0.5 with ground truth. In our flagship "
-        "evaluation on all 9,658 test images, 265,189 spatial hallucinations were suppressed, "
-        "yielding verified scores of 30.31% Full mAP, 29.71% Rare mAP, and 30.51% Non-Rare mAP."
+        "evaluation on all 9,658 test images, 272,946 spatial hallucinations were suppressed, "
+        "yielding verified scores of 31.71% Full mAP, 30.63% Rare mAP, and 32.07% Non-Rare mAP."
     )
     add_body_text(doc,
         "Hardware and Training Architecture: All experiments were conducted on a single commodity "
@@ -614,7 +614,7 @@ def generate_paper():
         "frozen Vision-Language encoder: openai/clip-vit-base-patch16 (196 spatial patch tokens, "
         "512-dimensional embeddings). Thanks to class-balanced exemplar caching, offline training "
         "across all 38,118 images (13 shards, 15 epochs) completed in just 17.33 minutes (0.29 GPU-hours), "
-        "while full test evaluation on 9,658 test images completed in 83.49 minutes (1.39 GPU-hours)."
+        "while full test evaluation on 9,658 test images completed in 94.20 minutes (1.57 GPU-hours)."
     )
 
     # TABLE I - SOTA Comparison
@@ -638,10 +638,11 @@ def generate_paper():
         ["Vynix (0-Shot)", "Ours", "YOLOv8n+B/32", "0", "0.00h", "22.17%", "18.57%", "23.42%"],
         ["Vynix-Base", "Ours", "YOLOv8n+B/32", "38,118", "0.25h", "22.03%", "23.32%", "21.59%"],
         ["Vynix-M (Soft)", "Ours", "YOLOv8m+B/32", "38,118", "0.27h", "28.23%", "28.98%", "27.98%"],
-        ["Vynix Flagship", "Ours", "YOLOv8m+B/16", "38,118", "0.29h", "30.31%", "29.71%", "30.51%"],
+        ["Vynix-B16 (Phase 6)", "Ours", "YOLOv8m+B/16", "38,118", "0.29h", "30.31%", "29.71%", "30.51%"],
+        ["Vynix Flagship (Phase 8)", "Ours", "YOLOv8x+B/16", "38,118", "0.29h", "31.71%", "30.63%", "32.07%"],
     ]
     create_data_table(doc, table1_headers, table1_rows,
-                      bold_rows={13, 14, 15, 16})
+                      bold_rows={13, 14, 15, 16, 17})
     doc.add_paragraph()  # spacing
 
     # TABLE II - Component Ablation
@@ -654,7 +655,8 @@ def generate_paper():
         ["+ 3-Stream Encoding (fₕ + fₒ + fᵤ)", "22.17%", "18.57%", "319,803"],
         ["+ Decoupled Geometry MLP + Memory Cache", "26.15%", "25.40%", "319,803"],
         ["+ Soft Continuous Geometric Gate", "28.23%", "28.98%", "265,189"],
-        ["+ ViT-B/16 (196 Tokens, Flagship)", "30.31%", "29.71%", "265,189"],
+        ["+ ViT-B/16 (196 Tokens, Phase 6)", "30.31%", "29.71%", "265,189"],
+        ["+ Proposal Recall & Gate (Phase 8 Flagship)", "31.71%", "30.63%", "272,946"],
     ]
     create_data_table(doc, table2_headers, table2_rows, bold_last_row=True)
     doc.add_paragraph()
@@ -667,7 +669,8 @@ def generate_paper():
         ["Vynix-Base", "YOLOv8n", "ViT-B/32", "Hard Binary", "22.03%", "23.32%"],
         ["Vynix-M (Hard)", "YOLOv8m", "ViT-B/32", "Hard Binary", "26.15%", "25.40%"],
         ["Vynix-M (Soft)", "YOLOv8m", "ViT-B/32", "Soft Continuous", "28.23%", "28.98%"],
-        ["Vynix-Flagship", "YOLOv8m", "ViT-B/16", "Soft Continuous", "30.31%", "29.71%"],
+        ["Vynix-B16 (Phase 6)", "YOLOv8m", "ViT-B/16", "Soft Continuous", "30.31%", "29.71%"],
+        ["Vynix-Flagship (Phase 8)", "YOLOv8x", "ViT-B/16", "Soft + Gate & Calib", "31.71%", "30.63%"],
     ]
     create_data_table(doc, table3_headers, table3_rows, bold_last_row=True)
     doc.add_paragraph()
@@ -708,8 +711,8 @@ def generate_paper():
         "Project Vynix introduces a decoupled, compute-efficient framework for Human-Object "
         "Interaction detection that couples real-time object detection with 3-Stream visual encoding, "
         "an 8D spatial geometry MLP, a soft continuous geometric veto gate, and non-parametric memory "
-        "caching. Evaluated on all 9,658 official HICO-DET test images, Vynix achieves 30.31% Full "
-        "mAP, 29.71% Rare mAP, and 30.51% Non-Rare mAP, suppressing 265,189 spatial hallucinations "
+        "caching. Evaluated on all 9,658 official HICO-DET test images, Vynix achieves 31.71% Full "
+        "mAP, 30.63% Rare mAP, and 32.07% Non-Rare mAP, suppressing 272,946 spatial hallucinations "
         "and rescuing 54,532 border-touching interactions. By training in just 17.33 minutes on a "
         "single commodity GPU and overcoming long-tail gradient starvation, Vynix provides an "
         "accessible, grounded, and reproducible foundation for future interaction reasoning research."

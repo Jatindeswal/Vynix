@@ -1,9 +1,11 @@
 {
-  "mAP_full": 30.306378492216734,
-  "mAP_rare": 29.708086058916372,
-  "mAP_non_rare": 30.505809303316855,
-  "vetoes": 265189,
-  "detector": "yolov8m.pt",
+  "mAP_full": 31.712578075041932,
+  "mAP_rare": 30.63255407328392,
+  "mAP_non_rare": 32.07258607562794,
+  "vetoes": 272946,
+  "detector": "yolov8x.pt",
   "clip_model": "openai/clip-vit-base-patch16",
+  "det_lambda": 0.9,
+  "obj_gamma": 0.1,
   "total_test_images": 9658
 }

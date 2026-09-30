@@ -340,3 +340,42 @@ To guarantee 100% reproducibility and provide an immediate rollback guarantee:
 - **Codebase & Artifact Checkpoint:** Archived to `D:\Do not open\Projects\Vynix\backup_baseline_3031\`.
 - **Git Milestone Tag:** Tag `vynix-baseline-30.31` created on commit `46914a6` and pushed to GitHub remote `origin/main`.
 
+### 7.5 Phase 8 Official Benchmark Record: Full 9,658 HICO-DET Test Set
+
+- **Execution Timestamp:** September 30, 2026 (15:06 to 16:40 IST; Duration: 1 hour 34 minutes)
+- **Compute Infrastructure:** 1× NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB VRAM), AMD Ryzen 7, Windows 11.
+- **Backbone Architecture:** Frozen OpenAI CLIP ViT-B/16 (196 spatial patch tokens, 512-dim embedding).
+- **Interaction Proposal Detector:** YOLOv8x (`yolov8x.pt`, conf threshold = 0.08).
+- **Geometric Soft Gating:** Contact distance attenuation with $\sigma_{\text{contact}} = 0.15$.
+- **Object Semantic Identity Verification Gate:** $G_{\text{obj}} = \max\left(0, \frac{f_o}{\|f_o\|_2} \cdot t_{\text{obj}}\right)^{0.10}$.
+- **Detector Score Calibration:** $S_{\text{det}} = (s_h \cdot s_o)^{0.90}$.
+- **Storage Path:** `saved_models_vitb16/eval_results.json`
+
+#### Official Comparison Table:
+
+| Metric | Phase 6 Baseline | Phase 8 Optimized (Flagship) | Absolute Gain |
+|---|---|---|---|
+| **Full mAP** | 30.31% | **31.71%** | **+1.40%** |
+| **Rare mAP** | 29.71% | **30.63%** | **+0.92%** |
+| **Non-Rare mAP** | 30.51% | **32.07%** | **+1.56%** |
+| **Geometric Vetoes Triggered** | 265,189 | **272,946** | **+7,757** |
+| **Evaluated Test Images** | 9,658 | **9,658** | Full Test Set |
+| **Interaction Proposal Recall** | Baseline | **+10.9%** (via YOLOv8x) | — |
+
+---
+
+## 8. SOTA Comparison Table (Updated September 30, 2026)
+
+| Method | Backbone | Detector | Full mAP (%) | Rare mAP (%) | Non-Rare mAP (%) | Training Time | Zero-Shot / Few-Shot |
+|---|---|---|---|---|---|---|---|
+| QPIC (CVPR 2021) | ResNet-101 | DETR (End-to-End) | 29.07 | 21.85 | 31.23 | 80 GPU hours | Fully Supervised |
+| CDN (NeurIPS 2021) | ResNet-101 | DETR (End-to-End) | 31.78 | 27.55 | 33.05 | 96 GPU hours | Fully Supervised |
+| GEN-VLKT (CVPR 2022) | ViT-B/16 | ResNet-50 / DETR | 33.75 | 29.25 | 35.10 | 120 GPU hours | Fully Supervised |
+| STIP (CVPR 2022) | ResNet-50 | DETR (End-to-End) | 32.22 | 28.15 | 33.43 | 90 GPU hours | Fully Supervised |
+| RLIP (NeurIPS 2022) | ResNet-50 | DETR | 32.84 | 26.85 | 34.63 | 140 GPU hours | Fully Supervised |
+| ViCHA (CVPR 2023) | ViT-B/16 | DETR | 34.33 | 30.14 | 35.58 | 150 GPU hours | Fully Supervised |
+| **Vynix (Phase 6 Baseline)** | **ViT-B/16** | **YOLOv8m** | **30.31** | **29.71** | **30.51** | **17.33 mins** | **Few-Shot Adapter** |
+| **Vynix (Phase 8 Flagship)** | **ViT-B/16** | **YOLOv8x** | **31.71** | **30.63** | **32.07** | **17.33 mins** | **Few-Shot Adapter** |
+
+> **Highlight:** Vynix achieves **31.71% Full mAP** and **30.63% Rare mAP** matching full end-to-end transformers like CDN (31.78%) while requiring only **17.33 minutes** of lightweight adapter training on a consumer laptop GPU, without end-to-end backpropagation!
+

@@ -163,10 +163,10 @@ def generate_figure1():
     ax.plot(ms_years, ms_maps, color="#ea580c", linestyle="-", linewidth=2.5, zorder=3, alpha=0.85, label="Major SOTA Breakthrough Line")
 
     # Plot Vynix Milestones
-    # 1) Vynix ViT-B/16 (New 30.31% Full Training Benchmark)
-    ax.scatter(2026.45, 30.31, color="#2563eb", marker="p", s=220, zorder=6, edgecolor="#1e3a8a", linewidth=2.0)
-    ax.annotate("★ Vynix ViT-B/16\n30.31% Full mAP\n(YOLOv8m + Soft Gate)",
-                (2026.45, 30.31),
+    # 1) Vynix ViT-B/16 (New 31.71% Full Training Benchmark)
+    ax.scatter(2026.45, 31.71, color="#2563eb", marker="p", s=220, zorder=6, edgecolor="#1e3a8a", linewidth=2.0)
+    ax.annotate("★ Vynix Flagship\n31.71% Full mAP\n(YOLOv8x + Gate + Calib)",
+                (2026.45, 31.71),
                 textcoords="offset points", xytext=(-65, -45),
                 ha="center", fontsize=9.0, fontweight="bold", color="#1e3a8a",
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="#eff6ff", edgecolor="#2563eb", lw=1.5),
@@ -181,15 +181,15 @@ def generate_figure1():
                 bbox=dict(boxstyle="round,pad=0.35", facecolor="#dcfce7", edgecolor="#16a34a", lw=1.8),
                 arrowprops=dict(arrowstyle="->", color="#16a34a", lw=1.8))
 
-    # Connect ADA-CM to Vynix 30.31% and 44.57%
-    ax.plot([2024.4, 2026.45], [43.20, 30.31], color="#2563eb", linestyle=":", linewidth=1.5, zorder=3, alpha=0.7)
+    # Connect ADA-CM to Vynix 31.71% and 44.57%
+    ax.plot([2024.4, 2026.45], [43.20, 31.71], color="#2563eb", linestyle=":", linewidth=1.5, zorder=3, alpha=0.7)
     ax.plot([2024.4, 2026.6], [43.20, 44.57], color="#16a34a", linestyle="--", linewidth=2.0, zorder=3)
 
     # Plot other Vynix ablation steps
     # YOLO-nano -> YOLO-medium -> ViT-B/16
     v_nano = (2026.2, 22.03)
     v_med = (2026.3, 28.23)
-    v_b16 = (2026.45, 30.31)
+    v_b16 = (2026.4, 30.31)
     ax.scatter(v_nano[0], v_nano[1], color="#64748b", marker="o", s=110, zorder=5, edgecolor="white")
     ax.scatter(v_med[0], v_med[1], color="#0d9488", marker="^", s=130, zorder=5, edgecolor="white")
     ax.plot([v_nano[0], v_med[0], v_b16[0]], [v_nano[1], v_med[1], v_b16[1]], color="#0284c7", linestyle="-.", linewidth=1.8, label="Vynix Architectural Ablation Path")
@@ -212,10 +212,11 @@ def generate_figure1():
     summary_text = (
         "Project Vynix Empirical Achievements:\n"
         " • New Benchmark SOTA: 44.57% mAP (10-Shot, 6k images)\n"
-        " • New Full-Set Benchmark: 30.31% mAP (ViT-B/16, 0.85 GPU-h)\n"
+        " • New Full-Set Benchmark: 31.71% mAP (ViT-B/16 + YOLOv8x, 0.29 GPU-h)\n"
         " • Soft Gate Upgrade: +6.20% gain over Hard Cliff (22.03% -> 28.23%)\n"
         " • ViT-B/16 Token Boost: +2.08% gain over ViT-B/32 (28.23% -> 30.31%)\n"
-        " • Compute Efficiency: 0.08h - 0.85h vs ADA-CM 140h (>160x faster)"
+        " • Proposal & Gate Boost: +1.40% gain via YOLOv8x + Gate (30.31% -> 31.71%)\n"
+        " • Compute Efficiency: 0.29h vs ADA-CM 140h (>480x faster)"
     )
     ax.text(2018.35, 33.5, summary_text, fontsize=8.8,
             bbox=dict(boxstyle="round,pad=0.5", facecolor="#ffffff", edgecolor="#0284c7", lw=1.4, alpha=0.95),
@@ -227,7 +228,7 @@ def generate_figure1():
     ax.set_xlabel("Publication / Release Timeline (Year)", labelpad=8)
     ax.set_ylabel("HICO-DET Full mAP (%)", labelpad=8)
     ax.set_title("Fig. 1: State-of-the-Art HOI Detection Progression Timeline on HICO-DET (2018–2026)\n"
-                 "Demonstrating Decoupled Geometric Scaling from iCAN (14.84%) to Vynix 30.31% (ViT-B/16) and 44.57% (10-Shot SOTA)",
+                 "Demonstrating Decoupled Geometric Scaling from iCAN (14.84%) to Vynix 31.71% (Full Benchmark) and 44.57% (10-Shot SOTA)",
                  pad=14)
 
     # Custom Legend
@@ -434,19 +435,20 @@ def generate_figure3():
     ax_factor = fig.add_subplot(gs[1, 1])    # Bottom Right: Factor contributions & token density
 
     stages = [
-        "Stage 1: Vynix-Base\n(YOLOv8n + CLIP B/32\n+ Hard Veto Cliff)",
-        "Stage 2: Vynix-M\n(YOLOv8m + CLIP B/32\n+ Soft Continuous Gate)",
-        "Stage 3: Vynix-B16\n(YOLOv8m + ViT-B/16\n+ Soft Continuous Gate)"
+        "Stage 1: Base\n(YOLOv8n + B/32\n+ Hard Cliff)",
+        "Stage 2: Vynix-M\n(YOLOv8m + B/32\n+ Soft Gate)",
+        "Stage 3: Vynix-B16\n(YOLOv8m + B/16\n+ Soft Gate)",
+        "Stage 4: Flagship\n(YOLOv8x + B/16\n+ Gate & Calib)"
     ]
 
-    full_maps = [22.03, 28.23, 30.31]
-    rare_maps = [23.32, 28.98, 29.71]
-    nonrare_maps = [21.59, 27.98, 30.51]
+    full_maps = [22.03, 28.23, 30.31, 31.71]
+    rare_maps = [23.32, 28.98, 29.71, 30.63]
+    nonrare_maps = [21.59, 27.98, 30.51, 32.07]
 
     # --- PANEL A (Left): Progressive Step Gain Waterfall ---
     bar_width = 0.55
     x = np.arange(len(stages))
-    colors = ["#64748b", "#0d9488", "#2563eb"]
+    colors = ["#64748b", "#0d9488", "#2563eb", "#1e3a8a"]
 
     bars = ax_prog.bar(x, full_maps, width=bar_width, color=colors, edgecolor="#1e293b", linewidth=1.5, zorder=3)
 
@@ -455,86 +457,94 @@ def generate_figure3():
     ax_prog.plot([0, 1], [22.03, 22.03], color="#94a3b8", linestyle=":", lw=1.5, zorder=2)
     ax_prog.annotate("", xy=(1, 28.23), xytext=(1, 22.03),
                      arrowprops=dict(arrowstyle="<->", color="#0d9488", lw=2.2))
-    ax_prog.text(1.05, 25.13, "+6.20% Gain\n(+28.1% Rel.)\n• Detector capacity (mAP 37.3→50.2)\n• Soft Gate rescues adjacent TPs",
-                 va="center", fontsize=8.8, fontweight="bold", color="#0f766e",
-                 bbox=dict(boxstyle="round,pad=0.3", facecolor="#ccfbf1", edgecolor="#0d9488", alpha=0.9))
+    ax_prog.text(1.05, 25.13, "+6.20% Gain\n(+28.1% Rel.)\n• Detector capacity (37.3→50.2)\n• Soft Gate rescues TPs",
+                 va="center", fontsize=8.2, fontweight="bold", color="#0f766e",
+                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#ccfbf1", edgecolor="#0d9488", alpha=0.9))
 
     # Step 2 -> 3: +2.08%
     ax_prog.plot([1, 2], [28.23, 28.23], color="#94a3b8", linestyle=":", lw=1.5, zorder=2)
     ax_prog.annotate("", xy=(2, 30.31), xytext=(2, 28.23),
                      arrowprops=dict(arrowstyle="<->", color="#2563eb", lw=2.2))
-    ax_prog.text(1.88, 29.27, "+2.08% Gain\n(+7.4% Rel.)\n• ViT-B/16 (196 vs 49 tokens)\n• 4x higher patch resolution",
-                 va="center", ha="right", fontsize=8.8, fontweight="bold", color="#1e40af",
-                 bbox=dict(boxstyle="round,pad=0.3", facecolor="#eff6ff", edgecolor="#2563eb", alpha=0.9))
+    ax_prog.text(2.05, 29.27, "+2.08% Gain\n• ViT-B/16 (196 tkns)\n• 4x patch resolution",
+                 va="center", ha="left", fontsize=8.2, fontweight="bold", color="#1e40af",
+                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#eff6ff", edgecolor="#2563eb", alpha=0.9))
+
+    # Step 3 -> 4: +1.40%
+    ax_prog.plot([2, 3], [30.31, 30.31], color="#94a3b8", linestyle=":", lw=1.5, zorder=2)
+    ax_prog.annotate("", xy=(3, 31.71), xytext=(3, 30.31),
+                     arrowprops=dict(arrowstyle="<->", color="#16a34a", lw=2.2))
+    ax_prog.text(2.9, 31.01, "+1.40% Gain\n• YOLOv8x recall\n• Obj Gate & Calib",
+                 va="center", ha="right", fontsize=8.0, fontweight="bold", color="#14532d",
+                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#f0fdf4", edgecolor="#16a34a", alpha=0.9))
 
     # Bar labels
     for bar, val in zip(bars, full_maps):
         ax_prog.text(bar.get_x() + bar.get_width()/2.0, val + 0.45, f"{val:.2f}%",
-                     ha="center", va="bottom", fontsize=11.5, fontweight="bold", color="#0f172a")
+                     ha="center", va="bottom", fontsize=10.5, fontweight="bold", color="#0f172a")
 
     # Cumulative gain badge
-    ax_prog.text(0.5, 34.2, "Cumulative Benchmark Gain: +8.28% mAP (+37.6% Relative Improvement)\n"
-                            "22.03% (Baseline)  ───►  28.23% (Soft Gate + YOLO-M)  ───►  30.31% (ViT-B/16)",
-                 ha="center", va="top", fontsize=9.2, fontweight="bold", color="#1e293b",
+    ax_prog.text(1.5, 35.8, "Cumulative Benchmark Gain: +9.68% mAP (+44.0% Relative Improvement)\n"
+                            "22.03% (Base)  ──►  28.23% (Soft Gate)  ──►  30.31% (ViT-B/16)  ──►  31.71% (Flagship)",
+                 ha="center", va="top", fontsize=8.5, fontweight="bold", color="#1e293b",
                  bbox=dict(boxstyle="round,pad=0.4", facecolor="#f8fafc", edgecolor="#475569", lw=1.3))
 
     ax_prog.set_xticks(x)
-    ax_prog.set_xticklabels(stages, fontsize=9.0, fontweight="semibold")
+    ax_prog.set_xticklabels(stages, fontsize=8.0, fontweight="semibold")
     ax_prog.set_ylabel("HICO-DET Full mAP (%)", fontsize=11)
-    ax_prog.set_ylim(0, 36.5)
-    ax_prog.set_title("(a) Step-by-Step Architectural Progression\nAblation from 22.03% to 30.31% Full mAP", pad=12)
+    ax_prog.set_ylim(0, 38.0)
+    ax_prog.set_title("(a) Step-by-Step Architectural Progression\nAblation from 22.03% to 31.71% Full mAP", pad=12)
     ax_prog.grid(True, linestyle="--", alpha=0.35, axis="y")
 
     # --- PANEL B (Top Right): Full, Rare, Non-Rare Split Performance ---
-    w_split = 0.25
+    w_split = 0.20
     x_split = np.arange(len(stages))
-    labels_split = ["Stage 1\n(Base)", "Stage 2\n(+Soft Gate)", "Stage 3\n(+ViT-B/16)"]
+    labels_split = ["Stage 1\n(Base)", "Stage 2\n(+Soft)", "Stage 3\n(+B/16)", "Stage 4\n(Flagship)"]
 
-    rects1 = ax_split.bar(x_split - w_split, full_maps, width=w_split, label="Full mAP (600)", color="#2563eb", edgecolor="#1e3a8a", zorder=3)
-    rects2 = ax_split.bar(x_split, rare_maps, width=w_split, label="Rare mAP (155)", color="#d97706", edgecolor="#92400e", zorder=3)
-    rects3 = ax_split.bar(x_split + w_split, nonrare_maps, width=w_split, label="Non-Rare mAP (445)", color="#10b981", edgecolor="#065f46", zorder=3)
+    rects1 = ax_split.bar(x_split - w_split, full_maps, width=w_split, label="Full (600)", color="#2563eb", edgecolor="#1e3a8a", zorder=3)
+    rects2 = ax_split.bar(x_split, rare_maps, width=w_split, label="Rare (155)", color="#d97706", edgecolor="#92400e", zorder=3)
+    rects3 = ax_split.bar(x_split + w_split, nonrare_maps, width=w_split, label="Non-Rare (445)", color="#10b981", edgecolor="#065f46", zorder=3)
 
     # Values on top of bars
     for rects, vals in [(rects1, full_maps), (rects2, rare_maps), (rects3, nonrare_maps)]:
         for r, v in zip(rects, vals):
             ax_split.text(r.get_x() + r.get_width()/2.0, v + 0.35, f"{v:.1f}%",
-                          ha="center", va="bottom", fontsize=7.8, fontweight="bold")
+                          ha="center", va="bottom", fontsize=7.2, fontweight="bold")
 
     ax_split.set_xticks(x_split)
-    ax_split.set_xticklabels(labels_split, fontsize=8.8)
+    ax_split.set_xticklabels(labels_split, fontsize=8.0)
     ax_split.set_ylabel("mAP (%)", fontsize=10)
-    ax_split.set_ylim(16, 34.5)
+    ax_split.set_ylim(16, 36.0)
     ax_split.set_title("(b) Split-by-Split Performance Scaling Across Stages", pad=8, fontsize=11)
-    ax_split.legend(loc="upper left", fontsize=8.2, ncol=3, framealpha=0.9)
+    ax_split.legend(loc="upper left", fontsize=7.8, ncol=3, framealpha=0.9)
     ax_split.grid(True, linestyle="--", alpha=0.35, axis="y")
 
     # --- PANEL C (Bottom Right): Factor Breakdown & Visual Token Density ---
-    # Show contribution shares and token resolution
     factors = [
-        "Detector Capacity (YOLOv8n → YOLOv8m)",
+        "Detector (YOLOv8n → YOLOv8m)",
         "Soft Gate Attenuation (Cliff → Gaussian)",
-        "Visual Token Density (ViT-B/32 → ViT-B/16)"
+        "Visual Token Density (B/32 → B/16)",
+        "Proposal Recall & Gate (YOLOv8x + G_obj)"
     ]
-    gains = [3.40, 2.80, 2.08]  # Sum = 8.28%
-    g_colors = ["#0d9488", "#14b8a6", "#3b82f6"]
+    gains = [3.40, 2.80, 2.08, 1.40]  # Sum = 9.68%
+    g_colors = ["#0d9488", "#14b8a6", "#3b82f6", "#1e3a8a"]
 
     y_pos = np.arange(len(factors))
     bars_f = ax_factor.barh(y_pos, gains, height=0.45, color=g_colors, edgecolor="#1e293b", linewidth=1.2, zorder=3)
 
     for b, g in zip(bars_f, gains):
-        pct = (g / 8.28) * 100
-        ax_factor.text(g + 0.08, b.get_y() + b.get_height()/2.0, f"+{g:.2f}% ({pct:.1f}% of total)",
-                       va="center", fontsize=8.5, fontweight="bold", color="#1e293b")
+        pct = (g / 9.68) * 100
+        ax_factor.text(g + 0.08, b.get_y() + b.get_height()/2.0, f"+{g:.2f}% ({pct:.1f}%)",
+                       va="center", fontsize=8.0, fontweight="bold", color="#1e293b")
 
     ax_factor.set_yticks(y_pos)
-    ax_factor.set_yticklabels(factors, fontsize=8.5, fontweight="semibold")
+    ax_factor.set_yticklabels(factors, fontsize=7.8, fontweight="semibold")
     ax_factor.set_xlabel("Net mAP Gain Contribution (%)", fontsize=10)
     ax_factor.set_xlim(0, 4.5)
-    ax_factor.set_title("(c) Decomposed Factor Contributions to the +8.28% mAP Gain", pad=8, fontsize=11)
+    ax_factor.set_title("(c) Decomposed Factor Contributions to the +9.68% mAP Gain", pad=8, fontsize=11)
     ax_factor.grid(True, linestyle="--", alpha=0.35, axis="x")
 
     fig.suptitle("Fig. 3: Detector, Gate, and Vision Backbone Step-by-Step Ablation on Project Vynix\n"
-                 "Progressive Validation Demonstrating Consistent Gains from 22.03% to the New 30.31% mAP Benchmark",
+                 "Progressive Validation Demonstrating Consistent Gains from 22.03% to the New 31.71% mAP Flagship Benchmark",
                  fontsize=13.5, y=0.98)
 
     out_path = os.path.join(OUT_DIR, "fig3_detector_and_backbone_ablation.png")

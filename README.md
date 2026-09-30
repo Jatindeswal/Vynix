@@ -83,13 +83,14 @@ Evaluated across all **9,658 test images** and all **600 official HOI categories
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Vynix (Zero-Shot Baseline)** | YOLOv8n | CLIP ViT-B/32 | 22.17% | 18.57% | 23.42% | 319,803 |
 | **Vynix-Adapter (ViT-B/32)** | YOLOv8m | CLIP ViT-B/32 | 28.23% | 28.98% | 27.98% | 265,189 |
-| **Vynix-Adapter (ViT-B/16 Official)** | **YOLOv8m** | **CLIP ViT-B/16** | **30.31%** | **29.71%** | **30.51%** | **265,189** |
+| **Vynix-Adapter (ViT-B/16 Phase 6)** | YOLOv8m | CLIP ViT-B/16 | 30.31% | 29.71% | 30.51% | 265,189 |
+| **Vynix Flagship (Phase 8 Official)** | **YOLOv8x** | **CLIP ViT-B/16** | **31.71%** | **30.63%** | **32.07%** | **272,946** |
 | *Vynix 1-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 31.42% | 28.97% | 32.27% | 265,189 |
 | *Vynix 5-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 38.82% | 36.77% | 39.53% | 265,189 |
 | *Vynix 10-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 44.57% | 42.72% | 45.21% | 265,189 |
 
 ### 🛡️ Hallucination Veto Impact:
-- **265,189** false-positive contact hallucinations suppressed across the official test set.
+- **272,946** false-positive contact hallucinations suppressed across the official test set.
 - Top prevented hallucinated verbs: `hold` (44,979), `carry` (31,730), `wash` (27,652), `ride` (22,726), `sit_on` (17,985).
 
 ---
@@ -210,10 +211,11 @@ vynix train --dataset-dir /path/to/dataset --epochs 3 --limit 500 --output-dir s
 | **DiffHOI** | ICCV '23 | Fully Supervised | 38,118 | ~120h | 41.50% | 39.80% | 42.01% |
 | **ADA-CM** | CVPR '24 | Fully Supervised | 38,118 | ~140h | 43.20% | 41.50% | 43.70% |
 | **Vynix (Zero-Shot)** | **Ours** | **Zero-Shot** | **0** | **0.0h** | **22.17%** | **18.57%** | **23.42%** |
-| **Vynix-Adapter (Official)** | **Ours** | **Few-Shot** | **38,118** | **0.8h** | **30.31%** | **29.71%** | **30.51%** |
-| **Vynix-Adapter (1-Shot)** | **Ours** | **Few-Shot** | **600** | **0.03h** | **31.42%** | **28.97%** | **32.27%** |
-| **Vynix-Adapter (5-Shot)** | **Ours** | **Few-Shot** | **3,000** | **0.05h** | **38.82%** | **36.77%** | **39.53%** |
-| **Vynix-Adapter (10-Shot)** | **Ours** | **Few-Shot** | **6,000** | **0.08h** | **44.57%** | **42.72%** | **45.21%** |
+| **Vynix-B16 (Phase 6)** | **Ours** | **Few-Shot** | **38,118** | **0.29h** | **30.31%** | **29.71%** | **30.51%** |
+| **Vynix Flagship (Phase 8)** | **Ours** | **Few-Shot** | **38,118** | **0.29h** | **31.71%** | **30.63%** | **32.07%** |
+| *Vynix (1-Shot)* | Ours | Few-Shot | 600 | 0.03h | 31.42% | 28.97% | 32.27% |
+| *Vynix (5-Shot)* | Ours | Few-Shot | 3,000 | 0.05h | 38.82% | 36.77% | 39.53% |
+| *Vynix (10-Shot)* | Ours | Few-Shot | 6,000 | 0.08h | 44.57% | 42.72% | 45.21% |
 
 ---
 
