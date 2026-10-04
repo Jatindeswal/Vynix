@@ -1,0 +1,68 @@
+{
+  "test_images": 150,
+  "results": [
+    {
+      "mAP_full": 17.630309441842474,
+      "mAP_rare": 20.755827768774083,
+      "mAP_nonrare": 16.588469999531934,
+      "parity": 125.12201408182753,
+      "name": "Full Vynix 2.0 (Flagship SOTA)",
+      "vetoes": 3595,
+      "desc": "Complete decoupled pipeline with all geometric & semantic constraints"
+    },
+    {
+      "mAP_full": 17.610507854540884,
+      "mAP_rare": 20.750272213218526,
+      "mAP_nonrare": 16.56391973498167,
+      "parity": 125.27392395771886,
+      "name": "Ablation 1: w/o Object Semantic Gate",
+      "vetoes": 3595,
+      "desc": "Disables isolated object crop semantic verification gate (gamma = 0.0)"
+    },
+    {
+      "mAP_full": 17.64437028840332,
+      "mAP_rare": 20.76138332432964,
+      "mAP_nonrare": 16.605365943094547,
+      "parity": 125.02815894258205,
+      "name": "Ablation 2: w/o Score Calibration",
+      "vetoes": 3595,
+      "desc": "Linear detection score multiplication (det_score = (p_conf * o_conf)^1.0)"
+    },
+    {
+      "mAP_full": 17.827564732847765,
+      "mAP_rare": 21.13175369470001,
+      "mAP_nonrare": 16.726168412230347,
+      "parity": 126.33947700328218,
+      "name": "Ablation 3: w/o Adaptive Alpha",
+      "vetoes": 3595,
+      "desc": "Replaces class-adaptive alpha with uniform static alpha = 0.35"
+    },
+    {
+      "mAP_full": 17.299234448713907,
+      "mAP_rare": 20.466012953959268,
+      "mAP_nonrare": 16.24364161363212,
+      "parity": 125.99399470118581,
+      "name": "Ablation 4: Hard Binary Gate (IoU > 0)",
+      "vetoes": 6321,
+      "desc": "Strict binary threshold: if IoU == 0 on contact verb -> veto (0.0)"
+    },
+    {
+      "mAP_full": 17.616453621736653,
+      "mAP_rare": 20.994716657662973,
+      "mAP_nonrare": 16.49036594309455,
+      "parity": 127.31504400879989,
+      "name": "Ablation 5: w/o Geometric Veto Gate",
+      "vetoes": 0,
+      "desc": "No spatial veto: permits distant entities to predict contact actions (gate = 1.0)"
+    },
+    {
+      "mAP_full": 17.7271017698848,
+      "mAP_rare": 21.17619813914445,
+      "mAP_nonrare": 16.577402980131584,
+      "parity": 127.74134865711252,
+      "name": "Ablation 6: Raw Baseline (No Gates/Calib)",
+      "vetoes": 0,
+      "desc": "Unconstrained visual-semantic matching without geometric or affordance priors"
+    }
+  ]
+}
