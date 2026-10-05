@@ -475,3 +475,12 @@ Option 1 eliminates this representation discrepancy by:
 
 - **Key Takeaway:** The continuous soft Gaussian decay rescues borderline contact actions that hard binary cutoffs discard, while suppressing over 272,000 spatial hallucinations. Rare class retention parity remains rock-solid at 105.0% across the full benchmark.
 - **Deliverables:** `analysis_outputs/full_test_ablation_results.json`, `analysis_outputs/full_test_ablation_benchmark.png`.
+
+### 9.9 System Architecture Diagram (Archify Showcase)
+- **Tool Used:** `archify` (v3.0.1) via `.archify/architecture-vynix-system-20261006-005701/candidate.json`.
+- **Generated Diagram:** `Vynix_System_Architecture.html` (773 KB, self-contained interactive SVG with dark/light themes, card drawers, and multi-stream orthogonal routing).
+- **Validation Gates:** 100% passed (`validate: pass`, `deliver: pass`, `check: pass`, `browser-check: pass`).
+- **Architecture Highlights Visualized:**
+  - 3-Lane Orthogonal Processing Pipeline: Semantic stream (top), spatial & proposal stream (middle), physical gating stream (bottom).
+  - All 5 stages explicitly mapped: YOLOv8x Detector, Soft Geometric Gate (272k vetoes), Object Affordance Matrix, CLIP ViT-B/16 Backbone, Non-Parametric Exemplar Cache Bank (105% Rare Parity), Spatial Relation MLP, and Adapter Score Fusion.
+

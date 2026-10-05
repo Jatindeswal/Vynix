@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Project Vynix 2.0 System Architecture",
+    "subtitle": "Decoupled Multi-Modal Reasoning Engine for Scalable Human-Object Interaction Detection",
+    "output": ".archify/architecture-vynix-system-20261006-005701/vynix-system.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Vynix CLI & Pipeline",
+      "sublabel": "vynix predict / eval / train",
+      "tag": "Entry Point",
+      "pos": [40, 90],
+      "size": [140, 64]
+    },
+    {
+      "id": "input",
+      "type": "external",
+      "label": "Input Stream",
+      "sublabel": "RGB Images / Parquet Shards",
+      "tag": "9,658 Test / 38,118 Train",
+      "pos": [40, 240],
+      "size": [140, 64]
+    },
+    {
+      "id": "detector",
+      "type": "backend",
+      "label": "YOLOv8x Detector",
+      "sublabel": "Stage 1: Proposal Mining",
+      "tag": "53.9 mAP (COCO)",
+      "pos": [240, 240],
+      "size": [150, 64]
+    },
+    {
+      "id": "clip_text",
+      "type": "backend",
+      "label": "Text Semantic Weights",
+      "sublabel": "Multi-Template Ensembles",
+      "tag": "600 HOI Priors",
+      "pos": [240, 90],
+      "size": [150, 64]
+    },
+    {
+      "id": "clip_encoder",
+      "type": "backend",
+      "label": "CLIP ViT-B/16 Backbone",
+      "sublabel": "Stage 4: Visual Crops",
+      "tag": "Frozen 512-d Tokens",
+      "pos": [470, 90],
+      "size": [150, 64]
+    },
+    {
+      "id": "spatial_mlp",
+      "type": "backend",
+      "label": "Spatial Relation MLP",
+      "sublabel": "Stage 5: 8D Coordinate Net",
+      "tag": "2-Layer Invariant Net",
+      "pos": [470, 240],
+      "size": [150, 64]
+    },
+    {
+      "id": "geom_gate",
+      "type": "security",
+      "label": "Soft Geometric Gate",
+      "sublabel": "Stage 2: Continuous Physics",
+      "tag": "272,946 Vetoes",
+      "pos": [470, 390],
+      "size": [150, 64]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Exemplar Cache Bank",
+      "sublabel": "Stage 5: Non-Parametric Memory",
+      "tag": "105.0% Rare Parity",
+      "pos": [740, 90],
+      "size": [150, 64]
+    },
+    {
+      "id": "affordance",
+      "type": "security",
+      "label": "Object Affordance Gate",
+      "sublabel": "Stage 3: Common-Sense Prior",
+      "tag": "M in {0,1}^(80x117)",
+      "pos": [740, 390],
+      "size": [150, 64]
+    },
+    {
+      "id": "calibrator",
+      "type": "backend",
+      "label": "Adapter Fusion",
+      "sublabel": "Score Calibration (lambda=0.9)",
+      "tag": "Tip-Adapter-F Core",
+      "pos": [980, 240],
+      "size": [180, 64]
+    },
+    {
+      "id": "verdict",
+      "type": "external",
+      "label": "HOI Triplet Verdicts",
+      "sublabel": "<Human, Action, Object>",
+      "tag": "34.80% Full / 36.10% Rare",
+      "pos": [1290, 240],
+      "size": [150, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Project Vynix Decoupled Reasoning Engine",
+      "wraps": [
+        "detector",
+        "clip_text",
+        "clip_encoder",
+        "cache",
+        "spatial_mlp",
+        "geom_gate",
+        "affordance",
+        "calibrator"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Physical & Common-Sense Gating",
+      "wraps": [
+        "geom_gate",
+        "affordance"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cli-to-detector",
+      "from": "cli",
+      "to": "detector",
+      "label": "invokes pipeline"
+    },
+    {
+      "id": "input-to-detector",
+      "from": "input",
+      "to": "detector",
+      "label": "RGB frames",
+      "variant": "emphasis"
+    },
+    {
+      "id": "clip-text-to-encoder",
+      "from": "clip_text",
+      "to": "clip_encoder",
+      "label": "text tokens"
+    },
+    {
+      "id": "detector-to-encoder",
+      "from": "detector",
+      "to": "clip_encoder",
+      "label": "visual crops",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "detector-to-spatial",
+      "from": "detector",
+      "to": "spatial_mlp",
+      "label": "8D coordinates"
+    },
+    {
+      "id": "detector-to-gate",
+      "from": "detector",
+      "to": "geom_gate",
+      "label": "box proposals",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "encoder-to-cache",
+      "from": "clip_encoder",
+      "to": "cache",
+      "label": "visual query f_u",
+      "variant": "emphasis"
+    },
+    {
+      "id": "geom-to-affordance",
+      "from": "geom_gate",
+      "to": "affordance",
+      "label": "spatial prior",
+      "variant": "security"
+    },
+    {
+      "id": "cache-to-calibrator",
+      "from": "cache",
+      "to": "calibrator",
+      "label": "exemplar affinity",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "spatial-to-calibrator",
+      "from": "spatial_mlp",
+      "to": "calibrator",
+      "label": "spatial logits",
+      "variant": "emphasis"
+    },
+    {
+      "id": "affordance-to-calibrator",
+      "from": "affordance",
+      "to": "calibrator",
+      "label": "binary mask M",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "calibrator-to-verdict",
+      "from": "calibrator",
+      "to": "verdict",
+      "label": "calibrated predictions",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Stage 1 & 2: Proposal Mining & Spatial Physics",
+      "items": [
+        "YOLOv8x extracts high-recall person & object candidates with adaptive thresholds (conf >= 0.08)",
+        "Soft Gaussian Geometric Gate vetoes 272,946 contact hallucinations without suppressing distant interactions"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Stage 3 & 4: Multi-Modal Semantic Alignment",
+      "items": [
+        "Object Affordance Matrix enforces physical common-sense priors in O(1) time across 80 COCO classes",
+        "CLIP ViT-B/16 extracts 512-d normalized visual embeddings from union boxes and entity instances"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Stage 5: Non-Parametric Memory & Invariant Spatial MLP",
+      "items": [
+        "Non-parametric exemplar cache bank achieves 105.0% Rare class retention parity with zero SGD overwrite",
+        "2-layer invariant spatial MLP projects 8D coordinate vectors into relationship predicate logits",
+        "Sublinear score calibrator (lambda=0.9) balances proposal detection and interaction probabilities"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "42cdcf32-2620-4afc-8530-51ab1ccef457",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\Do not open\\Projects\\Vynix\\.archify\\architecture-vynix-system-20261006-005701\\candidate.json",
+  "output": "D:\\Do not open\\Projects\\Vynix\\.archify\\architecture-vynix-system-20261006-005701\\vynix-system.html",
+  "specification": {
+    "sha256": "be544f95b98cb13f1db1b1680d3c7f4aa6f938abcfb7e56fe8c6c00c21fa13f2",
+    "bytes": 6551
+  },
+  "artifact": {
+    "sha256": "1be4d950a8f6a91ab9d48a5f772bdc9c4f9896483bb2747fd1563d8a55e85dde",
+    "bytes": 773160
+  }
+}

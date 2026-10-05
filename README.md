@@ -9,6 +9,7 @@
 [![Open Interactive Presentation & Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Interactive_Presentation_and_Benchmark.ipynb)
 [![Presentation Deck (PPTX)](https://img.shields.io/badge/Presentation-PowerPoint%20Deck%20(.pptx)-orange?logo=microsoftpowerpoint)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.pptx)
 [![Interactive Slides (HTML5)](https://img.shields.io/badge/Presentation-Interactive%20HTML5%20Deck-cyan?logo=html5)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.html)
+[![Interactive Architecture Diagram](https://img.shields.io/badge/Architecture-Interactive%20Diagram%20(Archify)-purple?logo=diagramsdotnet)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_System_Architecture.html)
 [![Paper PDF](https://img.shields.io/badge/Paper-PDF%20(IEEE%20Format)-red?logo=adobeacrobatreader)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_IEEE_Research_Paper.pdf)
 
 **Project Vynix** is an open-source, production-grade Human-Object Interaction (HOI) detection system engineered to eliminate Vision-Language Model (VLM) spatial hallucinations using continuous geometric reasoning and few-shot multi-stream visual adaptation.
@@ -239,6 +240,7 @@ Vynix/
 ├── list_action.csv             # 600-class HICO-DET taxonomy definitions
 ├── Vynix_Presentation_Review.pptx # 16:9 Widescreen PowerPoint Presentation Deck (with Speaker Notes)
 ├── Vynix_Presentation_Review.html # Standalone interactive HTML5 presentation deck
+├── Vynix_System_Architecture.html  # Interactive system architecture diagram (Archify)
 ├── Vynix_Interactive_Presentation_and_Benchmark.ipynb # Interactive Google Colab dashboard
 ├── Vynix_IEEE_Research_Paper.pdf  # Camera-ready IEEE format 2-column paper
 ├── saved_models_v2.0/          # ★ Official Vynix 2.0 SOTA Flagship (34.80% mAP)
