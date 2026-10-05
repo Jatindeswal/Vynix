@@ -1,0 +1,66 @@
+{
+  "total_test_images": 9658,
+  "elapsed_minutes": 91.74065258105595,
+  "results": [
+    {
+      "mAP_full": 34.8046006206063,
+      "mAP_rare": 36.10319951642785,
+      "mAP_nonrare": 34.37173432199913,
+      "parity": 105.03746822376816,
+      "id": "flagship_baseline",
+      "name": "Flagship Vynix 2.0 (SOTA)",
+      "desc": "Full flagship model (Soft Gate, Obj Gate, lambda=0.9)",
+      "vetoes": 272946
+    },
+    {
+      "mAP_full": 34.5255659253456,
+      "mAP_rare": 36.03848500903167,
+      "mAP_nonrare": 34.02125956411692,
+      "parity": 105.92930852872469,
+      "id": "no_geom_gate",
+      "name": "w/o Geometric Veto Gate",
+      "desc": "Spatial gate disabled (gate=1.0 for all pairs)",
+      "vetoes": 0
+    },
+    {
+      "mAP_full": 34.32699045347755,
+      "mAP_rare": 35.619679158042075,
+      "mAP_nonrare": 33.89609421862271,
+      "parity": 105.08490721173538,
+      "id": "hard_binary_gate",
+      "name": "Hard Binary Gate (IoU>0)",
+      "desc": "Strict IoU>0 binary threshold on contact verbs",
+      "vetoes": 463346
+    },
+    {
+      "mAP_full": 34.82662926266637,
+      "mAP_rare": 36.048424288248256,
+      "mAP_nonrare": 34.419364254139076,
+      "parity": 104.73297537421331,
+      "id": "no_obj_gate",
+      "name": "w/o Object Semantic Gate",
+      "desc": "Object verification disabled (gamma=0.0)",
+      "vetoes": 272946
+    },
+    {
+      "mAP_full": 34.76688971828822,
+      "mAP_rare": 35.97381261317024,
+      "mAP_nonrare": 34.364582086660874,
+      "parity": 104.68281710061595,
+      "id": "no_score_calib",
+      "name": "w/o Score Calibration",
+      "desc": "Linear detection score (lambda=1.0)",
+      "vetoes": 272946
+    },
+    {
+      "mAP_full": 34.505214843971665,
+      "mAP_rare": 35.89794488072227,
+      "mAP_nonrare": 34.04097149838813,
+      "parity": 105.45511276733706,
+      "id": "raw_baseline",
+      "name": "Raw Baseline (No Gates)",
+      "desc": "No geometric gate, no obj gate, lambda=1.0",
+      "vetoes": 0
+    }
+  ]
+}
