@@ -9,7 +9,7 @@
   },
   "metadata": {
     "random_seed": 42,
-    "git_commit": "90ce3e6824ccd6bb7ba7ff13610c4e3b291776ce",
+    "git_commit": "e848e8b013f77afd0c79988da7ead97b083ad07c",
     "library_versions": {
       "python": "3.13.12",
       "torch": "2.13.0+cu126",
