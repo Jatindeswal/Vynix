@@ -1,0 +1,10 @@
+{
+  "images_processed": 5718,
+  "skipped_saturation": 28588,
+  "entries_cached": 19673,
+  "extraction_seconds": 1172.4,
+  "adapter_train_seconds": 89.28856348991394,
+  "total_training_seconds": 1261.688563489914,
+  "learned_alpha": 0.9396052360534668,
+  "learned_beta": 5.592494487762451
+}

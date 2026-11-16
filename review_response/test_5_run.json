@@ -1,0 +1,28 @@
+{
+  "split": "test",
+  "detector": "yolov8x.pt",
+  "clip_model": "openai/clip-vit-base-patch16",
+  "images_evaluated": 5,
+  "elapsed_minutes": 0.02846709092458089,
+  "parameters": {
+    "det_lambda": 0.9,
+    "obj_gamma": 0.1,
+    "sigma_contact": 0.08,
+    "disable_gate": false,
+    "use_hard_gate": false
+  },
+  "box_level_default": {
+    "mAP_full": 0.8666666666666666,
+    "mAP_rare_138": 0.0,
+    "mAP_non_rare_462": 1.1255411255411256,
+    "mAP_pseudo_rare_150": 0.6666666666666667,
+    "mAP_pseudo_non_rare_450": 0.9333333333333335
+  },
+  "image_level_legacy": {
+    "mAP_full": 1.5,
+    "mAP_rare_138": 0.0,
+    "mAP_non_rare_462": 1.948051948051948,
+    "mAP_pseudo_rare_150": 1.3333333333333335,
+    "mAP_pseudo_non_rare_450": 1.5555555555555556
+  }
+}

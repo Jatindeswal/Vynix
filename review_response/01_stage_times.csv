@@ -1,0 +1,9 @@
+stage,config,number_of_images,number_of_crops,measured_seconds,included_in_reported_training_time,tag,notes
+train_yolo_and_clip_cache,Vynix_1.0_YOLOv8m_ViTB16,38118_indexed_subset_encoded,UNKNOWN_max60_per_processed_img,1039.8_combined_with_mlp,yes,LOG,"process.md:156 reports 17.33 min (1039.8 s) combined for cache extraction + 15-epoch training; exact skipped image count and total crops UNKNOWN until .pt inspected"
+train_mlp_and_adapter_15ep,Vynix_1.0_YOLOv8m_ViTB16,cached_entries_only,0,included_in_1039.8s,yes,LOG,"Trained on cached 1536-d features + 8-d spatials in train_vynix_full.py:203-237"
+train_yolo_and_clip_cache,Vynix_2.0_YOLOv8x_ViTB16,38118_indexed_subset_encoded,UNKNOWN_max60_per_processed_img,1039.8,yes,LOG,"process.md:402-407 reports 17.33 min (1039.8 s) for YOLOv8x+ViT-B/16 cache extraction; identical to Vynix 1.0 total time, requires verification"
+train_mlp_and_adapter_15ep,Vynix_2.0_YOLOv8x_ViTB16,cached_entries_only,0,121.2,yes,LOG,"process.md:402-407 reports 2.02 min (121.2 s) for 15 epochs at batch_size=64"
+test_end_to_end_eval,Vynix_1.0_YOLOv8m_ViTB16,9658,UNKNOWN_up_to_150_per_img,5009.4,no,LOG,"process.md:157 reports 83.49 min (5009.4 s, ~0.519 s/img)"
+test_end_to_end_eval,Vynix_2.0_YOLOv8x_ViTB16,9658,UNKNOWN_up_to_150_per_img,5504.4,no,LOG,"full_test_ablation_results.json:3 reports 91.74 min (5504.4 s, ~0.570 s/img) across 6 parallel scoring streams"
+subset_500_train_stage_breakdown,Vynix_2.0_YOLOv8x_ViTB16,500,UNKNOWN,UNKNOWN,N/A,UNKNOWN,"Blocked by run_command CWD error (e:\ does not exist); run locally to measure"
+subset_500_test_stage_breakdown,Vynix_2.0_YOLOv8x_ViTB16,500,UNKNOWN,UNKNOWN,N/A,UNKNOWN,"Blocked by run_command CWD error (e:\ does not exist); run locally to measure"

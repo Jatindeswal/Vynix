@@ -1,0 +1,31 @@
+{
+  "vynix_1.0": {
+    "sigma": 0.04,
+    "lambda": 1.0,
+    "gamma_obj": 0.0,
+    "detector_threshold": 0.08,
+    "alpha": 0.9549,
+    "beta": 5.5585
+  },
+  "metadata": {
+    "random_seed": 42,
+    "git_commit": "90ce3e6824ccd6bb7ba7ff13610c4e3b291776ce",
+    "library_versions": {
+      "python": "3.13.12",
+      "torch": "2.13.0+cu126",
+      "transformers": "5.14.1",
+      "ultralytics": "8.4.107",
+      "numpy": "2.4.6"
+    },
+    "selection_rule": "Highest val_10 Full mAP; tie-breaker: if within 0.1 mAP of peak, pick value closest to default. Alpha and beta kept as learned from train_90 without tuning.",
+    "evaluation_protocol": "Averaged over classes with >=1 GT in val_10 (only_valid_gt=True)."
+  },
+  "vynix_2.0": {
+    "sigma": 0.04,
+    "lambda": 0.9,
+    "gamma_obj": 0.1,
+    "detector_threshold": 0.08,
+    "alpha": 0.9396,
+    "beta": 5.5925
+  }
+}
