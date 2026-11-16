@@ -427,7 +427,11 @@ def generate_figure2():
 # =============================================================================
 def generate_figure3():
     print("Generating Figure 3: fig3_detector_and_backbone_ablation.png ...")
-    fig = plt.figure(figsize=(14.0, 7.2))
+    fig = plt.figure(figsize=(14.0, 8.2))
+    # Reserve a clear band at the top for the two-line suptitle. Without
+    # this the suptitle sits on top of the subplot titles once
+    # bbox_inches="tight" crops to the drawn artists.
+    fig.subplots_adjust(top=0.84)
     gs = fig.add_gridspec(2, 2, width_ratios=[1.2, 1.0], height_ratios=[1.0, 1.0], hspace=0.32, wspace=0.25)
 
     ax_prog = fig.add_subplot(gs[:, 0])      # Left: Progressive step waterfall / bar
@@ -482,9 +486,9 @@ def generate_figure3():
     ax_prog.plot([3, 4], [31.71, 31.71], color="#94a3b8", linestyle=":", lw=1.5, zorder=2)
     ax_prog.annotate("", xy=(4, 34.80), xytext=(4, 31.71),
                      arrowprops=dict(arrowstyle="<->", color="#16a34a", lw=2.2))
-    ax_prog.text(3.9, 33.25, "+3.09% Gain!\n• Cache Alignment\n• Zero Shift",
+    ax_prog.text(3.42, 35.05, "+3.09% Gain!\n• Cache Alignment\n• Zero Shift",
                  va="center", ha="right", fontsize=8.0, fontweight="bold", color="#14532d",
-                 bbox=dict(boxstyle="round,pad=0.2", facecolor="#f0fdf4", edgecolor="#16a34a", alpha=0.9))
+                 bbox=dict(boxstyle="round,pad=0.2", facecolor="#f0fdf4", edgecolor="#16a34a", alpha=0.95))
 
     # Bar labels
     for bar, val in zip(bars, full_maps):
@@ -498,7 +502,7 @@ def generate_figure3():
                  bbox=dict(boxstyle="round,pad=0.35", facecolor="#f8fafc", edgecolor="#475569", lw=1.3))
 
     ax_prog.set_xticks(x)
-    ax_prog.set_xticklabels(stages, fontsize=7.2, fontweight="semibold")
+    ax_prog.set_xticklabels(stages, fontsize=6.3, fontweight="semibold")
     ax_prog.set_ylabel("HICO-DET Full mAP (%)", fontsize=11)
     ax_prog.set_ylim(0, 41.0)
     ax_prog.set_title("(a) Step-by-Step Architectural Progression\nAblation from 22.03% to 34.80% Full mAP", pad=12)
@@ -513,11 +517,20 @@ def generate_figure3():
     rects2 = ax_split.bar(x_split, rare_maps, width=w_split, label="Rare (155)", color="#d97706", edgecolor="#92400e", zorder=3)
     rects3 = ax_split.bar(x_split + w_split, nonrare_maps, width=w_split, label="Non-Rare (445)", color="#10b981", edgecolor="#065f46", zorder=3)
 
-    # Values on top of bars
-    for rects, vals in [(rects1, full_maps), (rects2, rare_maps), (rects3, nonrare_maps)]:
-        for r, v in zip(rects, vals):
-            ax_split.text(r.get_x() + r.get_width()/2.0, v + 0.35, f"{v:.1f}%",
-                          ha="center", va="bottom", fontsize=6.8, fontweight="bold")
+    # Values on top of bars. Only the flagship stage is labelled: the earlier
+    # stages sit only 0.2 x-units apart, so three labels per group would
+    # inevitably collide. The full per-stage numbers are already tabulated in
+    # Table 5.1 of the report.
+    for idx, (rects, vals) in enumerate([(rects1, full_maps), (rects2, rare_maps),
+                                         (rects3, nonrare_maps)]):
+        for i, (r, v) in enumerate(zip(rects, vals)):
+            # Label only the flagship (last) stage; earlier groups are too
+            # tightly spaced for three labels each. Table 5.1 of the report
+            # carries the complete per-stage numbers.
+            if i != len(vals) - 1:
+                continue
+            ax_split.text(r.get_x() + r.get_width()/2.0, v + 0.32, f"{v:.1f}%",
+                          ha="center", va="bottom", fontsize=7.4, fontweight="bold")
 
     ax_split.set_xticks(x_split)
     ax_split.set_xticklabels(labels_split, fontsize=7.2)
@@ -555,7 +568,7 @@ def generate_figure3():
 
     fig.suptitle("Fig. 3: Detector, Gate, and Vision Backbone Step-by-Step Ablation on Project Vynix\n"
                  "Progressive Validation Demonstrating Consistent Gains from 22.03% to the New 34.80% mAP SOTA Flagship",
-                 fontsize=13.5, y=0.98)
+                 fontsize=13.5, y=0.965)
 
     out_path = os.path.join(OUT_DIR, "fig3_detector_and_backbone_ablation.png")
     fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
