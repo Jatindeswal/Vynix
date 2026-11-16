@@ -1,15 +1,7 @@
 {
-  "vynix_1.0": {
-    "sigma": 0.04,
-    "lambda": 1.0,
-    "gamma_obj": 0.0,
-    "detector_threshold": 0.08,
-    "alpha": 0.9549,
-    "beta": 5.5585
-  },
   "metadata": {
     "random_seed": 42,
-    "git_commit": "e848e8b013f77afd0c79988da7ead97b083ad07c",
+    "git_commit": "b2ea772f9c8339ba3196ae6cf97909bb34a9e000",
     "library_versions": {
       "python": "3.13.12",
       "torch": "2.13.0+cu126",
@@ -17,15 +9,25 @@
       "ultralytics": "8.4.107",
       "numpy": "2.4.6"
     },
-    "selection_rule": "Highest val_10 Full mAP; tie-breaker: if within 0.1 mAP of peak, pick value closest to default. Alpha and beta kept as learned from train_90 without tuning.",
-    "evaluation_protocol": "Averaged over classes with >=1 GT in val_10 (only_valid_gt=True)."
+    "selection_rule": "Highest val_10 Full mAP; tie-breaker: if within 0.10 mAP of peak, pick value closest to nominal default. Alpha and beta loaded from full-train checkpoints (saved_models_v1.0 and saved_models_v2.0).",
+    "sigma_grid_extension": "Extended from {0.04, 0.06, 0.08, 0.10, 0.12, 0.16} to {0.01, 0.02, 0.03, 0.04, 0.06, 0.08, 0.10, 0.12, 0.16} because the optimum was at the original grid edge (sigma=0.04). Peak at sigma=0.01 for both v1.0 (15.06% vs 14.89% at 0.02) and v2.0 (16.81% vs 16.66% at 0.02).",
+    "detector_threshold_verification": "Candidate pairs per image at 0.05, 0.08, and 0.12 were verified to be identical (16.88 pairs/img for v1.0, 17.49 pairs/img for v2.0). Ultralytics YOLO default internal conf=0.25 was active during extraction, meaning all proposals have confidence >= 0.25. Det_thresh=0.08 was selected by the tie-break rule.",
+    "evaluation_protocol": "Averaged over 479 classes with >=1 GT in val_10 (only_valid_gt=True)."
+  },
+  "vynix_1.0": {
+    "sigma": 0.01,
+    "lambda": 1.0,
+    "gamma_obj": 0.0,
+    "detector_threshold": 0.08,
+    "alpha": 0.9548500776290894,
+    "beta": 5.558594703674316
   },
   "vynix_2.0": {
-    "sigma": 0.04,
+    "sigma": 0.01,
     "lambda": 0.9,
     "gamma_obj": 0.1,
     "detector_threshold": 0.08,
-    "alpha": 0.9396,
-    "beta": 5.5925
+    "alpha": 0.9392436742782593,
+    "beta": 5.593530178070068
   }
 }
