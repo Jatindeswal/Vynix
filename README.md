@@ -1,26 +1,25 @@
 # Project Vynix 👁️🧠
 
-> [!WARNING]
-> **REPRODUCIBILITY AUDIT NOTICE: Standard Box-Level Default mAP vs. Legacy Image-Level AP**
-> - Earlier project drafts reported **image-level retrieval AP** ($30.31\%$ for v1.0, $34.80\%$ for v2.0) using a non-standard pseudo-rare split ($150$ classes with $h \bmod 4 == 0$). These image-level metrics evaluate whole-image HOI presence without bounding box spatial localization, and are **not comparable to published HICO-DET benchmark numbers**.
-> - Under the official **HICO-DET Standard Box-Level Default mAP protocol** ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$ on all $9,658$ test images, evaluated across the standard 600 Full / 138 Rare / 462 Non-Rare classes):
->   - **Vynix 1.0 (YOLOv8m + CLIP ViT-B/16):** achieves **12.23%** (VOC10+ Continuous mAP) / **12.80%** (VOC07 11-point interpolated mAP).
->   - **Vynix 2.0 (YOLOv8x + CLIP ViT-B/16):** achieves **14.76%** (VOC10+ Continuous mAP) / **15.29%** (VOC07 11-point interpolated mAP).
-> - Complete, verified tables, ablation benchmarks, and hyperparameter provenance are documented in [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md) and [review_response/DISCLOSURES.md](review_response/DISCLOSURES.md).
+> [!IMPORTANT]
+> **Vynix v3 Release & Reproducibility Audit Notice: Standard Box-Level Default Protocol**
+> - Earlier project drafts reported **image-level multi-label retrieval AP** ($30.31\%$ for v1.0, $34.80\%$ for v2.0) using a non-standard pseudo-rare split ($150$ classes with $h \bmod 4 == 0$). These image-level metrics evaluate whole-image HOI presence without bounding box spatial localization and are **not directly comparable to published box-level HICO-DET benchmark tables**.
+> - In **Vynix v3**, evaluation conforms strictly to the official **HICO-DET Standard Box-Level Default mAP Protocol** ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$ on all $9,658$ test images, evaluated across the standard 600 Full / 138 Rare / 462 Non-Rare classes):
+>   - **Vynix 1.0 (YOLOv8m + CLIP ViT-B/16):** **12.23%** (VOC10+ Continuous mAP) / **12.80%** (VOC07 11-point interpolated mAP `11P`).
+>   - **Vynix 2.0 (YOLOv8x + CLIP ViT-B/16):** **14.76%** (VOC10+ Continuous mAP) / **15.29%** (VOC07 11-point interpolated mAP `11P`).
+> - Complete verified metrics, full ablation suites, and hyperparameter provenance are documented in [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md), [PAPER_TO_CODE.md](PAPER_TO_CODE.md), and [results/MANIFEST.csv](results/MANIFEST.csv).
 
-> **Production-Grade Few-Shot Human-Object Interaction (HOI) Detection with Geometric Hallucination Veto**
+> **Few-Shot Human-Object Interaction (HOI) Detection with Geometric Hallucination Veto**
 
-[![PyPI Version](https://img.shields.io/badge/pypi-v1.0.0-blue.svg)](https://pypi.org/)
+[![Release](https://img.shields.io/badge/Release-v3.0-blue.svg)](https://github.com/Jatindeswal/Vynix/releases)
+[![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)](tests/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
-[![Open Full Training in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Train_Vynix_Full_Colab.ipynb)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Open Interactive Presentation & Benchmark in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jatindeswal/Vynix/blob/main/Vynix_Interactive_Presentation_and_Benchmark.ipynb)
-[![Presentation Deck (PPTX)](https://img.shields.io/badge/Presentation-PowerPoint%20Deck%20(.pptx)-orange?logo=microsoftpowerpoint)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.pptx)
 [![Interactive Slides (HTML5)](https://img.shields.io/badge/Presentation-Interactive%20HTML5%20Deck-cyan?logo=html5)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_Presentation_Review.html)
 [![Interactive Architecture Diagram](https://img.shields.io/badge/Architecture-Interactive%20Diagram%20(Archify)-purple?logo=diagramsdotnet)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_System_Architecture.html)
-[![Paper PDF](https://img.shields.io/badge/Paper-PDF%20(IEEE%20Format)-red?logo=adobeacrobatreader)](https://github.com/Jatindeswal/Vynix/blob/main/Vynix_IEEE_Research_Paper.pdf)
 
-**Project Vynix** is an open-source, production-grade Human-Object Interaction (HOI) detection system engineered to eliminate Vision-Language Model (VLM) spatial hallucinations using continuous geometric reasoning and few-shot multi-stream visual adaptation.
+**Project Vynix** is an open-source Human-Object Interaction (HOI) detection system engineered to suppress Vision-Language Model (VLM) spatial hallucinations using continuous geometric reasoning, multi-stream visual adaptation, and non-parametric exemplar caching.
 
 ---
 
@@ -33,8 +32,8 @@ Project Vynix implements a 5-stage decoupled reasoning pipeline:
                                   │    Input RGB Image     │
                                   └───────────┬────────────┘
                                               │
-                               [Stage 1: High-Recall Detection]
-                                    YOLOv8-Medium (COCO)
+                               [Stage 1: Proposal Detection]
+                                    YOLOv8 (COCO 80 classes)
                                               │
                        ┌──────────────────────┴──────────────────────┐
                        ▼                                             ▼
@@ -44,16 +43,16 @@ Project Vynix implements a 5-stage decoupled reasoning pipeline:
                                               │
                              [Stage 2: 3-Stream Visual Fusion]
                         Human Crop (512-d) || Object Crop (512-d) || Union Crop (512-d)
-                                 CLIP ViT-B/16 (196 tokens)
+                                 CLIP ViT-B/16 (1536-d fused)
                                               │
                              [Stage 3: Spatial Geometry MLP]
-                        8D Geometry Vector -> Interaction Prior P_spatial
+                        8D Geometry Vector -> Interaction Prior P_spatial (600-d)
                                               │
-                             [Stage 4: Tip-Adapter-F Cache]
-                        Non-Parametric Exemplar Affinity Blending
+                             [Stage 4: Residual Exemplar Cache]
+                        Non-Parametric Affinity Blending + Learned (alpha, beta)
                                               │
                              [Stage 5: Geometric Veto Gate]
-                        Soft Gaussian Veto for Zero-IoU Contact Verbs
+                        Continuous Gaussian Attenuation for Zero-IoU Contact Verbs
                                               │
                                               ▼
                                   ┌────────────────────────┐
@@ -61,199 +60,163 @@ Project Vynix implements a 5-stage decoupled reasoning pipeline:
                                   └────────────────────────┘
 ```
 
-### Detailed Component Breakdown:
+### Mathematical Formulation:
 
-1. **Stage 1 — Node Extraction ("The Eyes")**: Uses YOLOv8m (or YOLOv8x/n) to identify human agents ($c=0$) and object patients ($c \in [1, 79]$) with adaptive confidence thresholds for high recall.
-2. **Stage 2 — 3-Stream Visual Fusion ("The Translator")**:
-   - Human Crop ($f_h \in \mathbb{R}^{512}$): Captures fine human pose, hands, and gaze orientation.
-   - Object Crop ($f_o \in \mathbb{R}^{512}$): Preserves small object morphology (knife, cup, phone).
-   - Union Crop ($f_u \in \mathbb{R}^{512}$): Retains global contextual composition.
-   - Fused Visual Embedding: $f_{\text{vis}} = [f_h \parallel f_o \parallel f_u] \in \mathbb{R}^{1536}$ via CLIP ViT-B/16.
-3. **Stage 3 — Continuous Spatial Geometry MLP ("The Prior")**:
-   Encodes continuous bounding-box geometry $[\Delta x, \Delta y, w_p, h_p, w_o, h_o, \text{IoU}, \log(A_p / A_o)] \in \mathbb{R}^8$ through a 2-layer LayerNorm MLP to output interaction likelihood priors $\mathcal{P}_{\text{spatial}} \in [0, 1]^{600}$.
-4. **Stage 4 — Tip-Adapter-F Cache ("The Memory")**:
-   Applies exponential affinity over non-parametric exemplar keys to prevent catastrophic gradient starvation on rare classes:
-   
-   $$A = \exp\left(-\beta (1 - f_{\text{vis}} K_{\text{cache}}^T)\right), \quad S_{\text{blended}} = S_{\text{CLIP}} + \alpha (A \cdot V_{\text{cache}}) + 0.5 \log(\mathcal{P}_{\text{spatial}} + \epsilon)$$
-   
-5. **Stage 5 — The Vynix Geometric Veto Gate ("The Arbiter")**:
-   Applies a continuous Gaussian distance-decay override for physical contact interactions ($\mathcal{C}_{\text{contact}}$):
-   
-   $$\Phi(v, \text{IoU}, d_{\text{norm}}) = \begin{cases} 
-   1.0 & \text{if } v \notin \mathcal{C}_{\text{contact}} \lor \text{IoU} > 0.0 \\ 
-   \exp\left(-\left(\frac{d_{\text{norm}}}{\sigma_{\text{contact}}}\right)^2\right) & \text{if } v \in \mathcal{C}_{\text{contact}} \land \text{IoU} = 0.0
+1. **Stage 1 — Candidate Proposal Extraction:**
+   YOLOv8 extracts human candidates $b_h = (x_1, y_1, x_2, y_2)$ with confidence $s_h \ge 0.25$ and object candidates $b_o$ with confidence $s_o \ge 0.25$ belonging to COCO categories $c_o \in \{0, \dots, 79\}$.
+
+2. **Stage 2 — 3-Stream Multi-Crop Visual Encoding:**
+   Each candidate pair yields three crops: human $I_h$, object $I_o$, and contextual union $I_u$. A frozen CLIP ViT-B/16 visual encoder maps them to unit-norm embeddings $f_h, f_o, f_u \in \mathbb{R}^{512}$. They are concatenated and normalized:
+   $$f_{\text{vis}} = \frac{[f_h \parallel f_o \parallel f_u]}{\sqrt{3}} \in \mathbb{R}^{1536}$$
+
+3. **Stage 3 — Continuous Spatial Geometry MLP:**
+   An 8-D normalized spatial relationship vector is extracted:
+   $$g = \left[\frac{c_{ox}-c_{hx}}{W}, \frac{c_{oy}-c_{hy}}{H}, \frac{w_h}{W}, \frac{h_h}{H}, \frac{w_o}{W}, \frac{h_o}{H}, \text{IoU}(b_h, b_o), \ln\left(\frac{\max(w_h h_h, 1)}{\max(w_o h_o, 1)}\right)\right] \in \mathbb{R}^8$$
+   A 2-layer MLP ($\text{Linear}(8, 64) \to \text{LayerNorm}(64) \to \text{ReLU} \to \text{Linear}(64, 600) \to \text{Sigmoid}$) maps $g$ to spatial prior likelihoods $p_{\text{spatial}} \in [0, 1]^{600}$.
+
+4. **Stage 4 — Residual Exemplar Cache & Adaptive Blending:**
+   Non-parametric exemplar keys $K_{\text{cache}} \in \mathbb{R}^{N \times 1536}$ and one-hot multi-label targets $V_{\text{cache}} \in \{0, 1\}^{N \times 600}$ provide few-shot memory. The blended logits are computed as:
+   $$\text{logits} = S_{\text{vlm}} + \alpha \cdot \exp\left(-\beta (1 - f_{\text{vis}} K_{\text{cache}}^T)\right) V_{\text{cache}} + 0.5 \ln(p_{\text{spatial}} + 10^{-6})$$
+   where $S_{\text{vlm}} = (f_u / \sqrt{3}) W_{\text{text}}^T \in \mathbb{R}^{600}$, and $\alpha, \beta$ are learned scalar parameters ($\alpha \approx 0.94 - 0.95$, $\beta \approx 5.56 - 5.59$).
+
+5. **Stage 5 — Soft Continuous Geometric Veto Gate:**
+   Physical contact interactions ($\mathcal{V}_{\text{contact}}$, 59 verbs) require physical proximity. Hypotheses with $\text{IoU}(b_h, b_o) = 0$ are attenuated via a smooth Gaussian edge-distance decay:
+   $$\gamma(v, \text{IoU}, d_{\text{box}}) = \begin{cases} 
+   1.0 & \text{if } v \notin \mathcal{V}_{\text{contact}} \lor \text{IoU} > 0.0 \\ 
+   \exp\left(-\left(\frac{d_{\text{box}}}{\sigma}\right)^2\right) & \text{if } v \in \mathcal{V}_{\text{contact}} \land \text{IoU} = 0.0 
    \end{cases}$$
+   Final HOI score:
+   $$S_{\text{HOI}}(h, o, a) = M_{c_o, a} \cdot (s_h s_o)^\lambda \cdot G_{\text{obj}}(o) \cdot \gamma(a, \text{IoU}, d_{\text{box}}) \cdot \text{softmax}(\text{logits})_a$$
 
 ---
 
-## 📊 Benchmark Performance (HICO-DET Full Test Set)
+## 📊 Benchmark Results (Official HICO-DET Test Set)
 
-Evaluated across all **9,658 test images** and all **600 official HOI categories** under both the official Standard Box-Level Default setting (min(IoU_h, IoU_o) >= 0.5) and the legacy image-level retrieval metric:
+Evaluated across all **9,658 test images** under the official **HICO-DET Box-Level Default setting** ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$):
 
-| Model Release | Detector | Vision Backbone | Box Full mAP (Continuous) | Box Full mAP (11-Point 11P) | Legacy Image-Level AP | Hallucinations Vetoed | Release Directory |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Vynix 1.0** | YOLOv8m | CLIP ViT-B/16 | **12.23%** | **12.80%** | .25\%$ | **265,189** | saved_models_v1.0/ |
-| **Vynix 2.0** | **YOLOv8x** | **CLIP ViT-B/16** | **14.76%** | **15.29%** | **.53\%$** | **272,946** | saved_models_v2.0/ |
-| *YOLOv8x + v1 Cache* | YOLOv8x | CLIP ViT-B/16 | 13.25% | 13.70% | 31.68% | 272,946 | Intermediate Milestone |
+### Primary Benchmark Table
+| Model Release | Detector | Vision Backbone | Full mAP (Continuous) | Rare mAP (138) | Non-Rare mAP (462) | Full mAP (11-Point 11P) | Rare (11P) | Non-Rare (11P) | Hallucinations Vetoed |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Vynix 1.0** | YOLOv8m | CLIP ViT-B/16 | **12.23%** | 11.14% | 12.56% | **12.80%** | 10.69% | 13.42% | 265,189 |
+| **Vynix 2.0** | **YOLOv8x** | **CLIP ViT-B/16** | **14.76%** | **15.37%** | **14.58%** | **15.29%** | **14.71%** | **15.46%** | **272,946** |
+| *YOLOv8x + v1 Cache* | YOLOv8x | CLIP ViT-B/16 | 13.25% | 13.46% | 13.19% | 13.70% | 12.59% | 14.03% | 272,946 |
 
-> **Audit Findings on Splits & Performance:**
-> - **Box-Level Gain:** Upgrading the detector and aligning the cache from YOLOv8m to YOLOv8x delivers **+2.53% Box mAP** (.23\% \to 14.76\%$ continuous, $+20.7\%$ relative gain).
-> - **Standard Splits (138 Rare / 462 Non-Rare):** Under standard HICO-DET splits, Vynix 1.0 achieves .14\%$ Rare / .56\%$ Non-Rare mAP; Vynix 2.0 achieves .37\%$ Rare / .58\%$ Non-Rare mAP.
-> - **Legacy Claims:** The .31\%$ (v1.0) and .80\%$ (v2.0) figures were image-level classification APs evaluated without box localization checks, and should not be cited against published box-level HICO-DET detectors. Full details in [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md).
-
-### 🛡️ Hallucination Veto Impact:
-- **272,946** false-positive contact hallucinations suppressed across the official test set.
-- Top prevented hallucinated verbs: `hold` (44,979), `carry` (31,730), `wash` (27,652), `ride` (22,726), `sit_on` (17,985).
-
----
-
-## 📦 Installation & Packaging
-
-Project Vynix is packaged as a standard Python distribution conforming to PEP 517/518 and PEP 621.
-
-### Option A: Install from Source
-```bash
-git clone https://github.com/Jatindeswal/Vynix.git
-cd Vynix
-
-# Install in editable mode
-pip install -e .
-```
-
-### Option B: Install Dependencies via requirements.txt
-```bash
-pip install -r requirements.txt
-```
+### Ablation Suite (Vynix 2.0 on Full 9,658 Test Images)
+| Ablation Setting | Full mAP (Cont.) | Rare (138) | Non-Rare (462) | Full mAP (11P) | Impact / Mechanism |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Full Vynix 2.0 (Proposed)** | **14.76%** | **15.37%** | **14.58%** | **15.29%** | Complete calibrated pipeline |
+| Without Geometric Gate ($\sigma = \infty$) | 14.12% | 14.97% | 13.87% | 14.65% | **-0.64% drop** (hallucinations unchecked) |
+| Hard Binary Gate ($\text{IoU} > 0$ strictly) | 14.49% | 15.34% | 14.23% | 15.01% | **-0.27% drop** (kills adjacent contact interactions) |
+| Without Object Gate ($G_{\text{obj}} = 1$) | 14.73% | 15.47% | 14.51% | 15.25% | -0.03% drop |
+| Detector Score Only ($\lambda = 1.0$) | 14.75% | 15.37% | 14.57% | 15.28% | -0.01% drop |
+| Raw Baseline (No gates / calibration) | 14.05% | 15.01% | 13.77% | 14.57% | **-0.71% drop** |
 
 ---
 
-## 💻 Unified Command-Line Interface (CLI)
+## ⚡ Execution Latency & Profiling
 
-Project Vynix provides a single, high-performance CLI `vynix` (or `python vynix_cli.py`).
+Profiled cleanly on an isolated **NVIDIA RTX 4070 Ti** GPU over 300 test images (averaged over two independent benchmark passes):
 
-### 1. View Help
-```bash
-# Global CLI help
-vynix --help
-
-# Subcommand help
-vynix predict --help
-vynix eval --help
-vynix train --help
-```
-
-### 2. Predict HOIs on an Image (`vynix predict`)
-Run complete 5-stage inference on any input image with interactive table output and optional visualization saving:
-
-```bash
-# Basic prediction with default YOLOv8m detector and ViT-B/16 model
-vynix predict --image demo_hoi.jpg
-
-# Custom prediction with visual bounding box output
-vynix predict --image demo_hoi.jpg --detector yolov8m.pt --model-dir saved_models_vitb16 --output output.jpg
-
-# Adjust confidence threshold and top-k predictions
-vynix predict --image demo_hoi.jpg --conf 0.15 --top-k 10
-```
-
-#### Prediction Output Example:
-```
-==============================================================================
-  PROJECT VYNIX — HOI DETECTION PREDICTION PIPELINE
-==============================================================================
-  • Target Image   : demo_hoi.jpg
-  • Detector       : yolov8m.pt
-  • Model Dir      : saved_models_vitb16
-  • Hardware Device: cuda
-  • CLIP Backbone  : openai/clip-vit-base-patch16
-  • Meta Definition: list_action.csv
-
-==============================================================================
-  🏆 TOP PREDICTED HUMAN-OBJECT INTERACTIONS
-==============================================================================
-  Rank  | Interaction                  | Score    | IoU    | Gate Verdict            
-------------------------------------------------------------------------------
-  1     | person sit_on bench          |  84.50%  |  0.34  | ✓ APPROVED (Gate=1.00)  
-  2     | person inspect bench         |  12.30%  |  0.34  | ✓ APPROVED (Gate=1.00)  
-  3     | person ride bench            |   0.00%  |  0.00  | 🛡️ VETOED (Zero-IoU)  
-------------------------------------------------------------------------------
-  Total spatial hallucinations vetoed: 1
-```
-
-### 3. Evaluate on Benchmark (`vynix eval`)
-Evaluate performance on HICO-DET test shards with automatic mAP calculation across Full, Rare, and Non-Rare splits:
-
-```bash
-# Quick validation on 100 test images
-vynix eval --dataset-dir /path/to/dataset --limit 100
-
-# Full benchmark evaluation (9,658 images)
-vynix eval --dataset-dir /path/to/dataset --limit 0 --model-dir saved_models_vitb16
-```
-
-### 4. Train 3-Stream Adapter (`vynix train`)
-Extract multi-stream visual and geometric caches from parquet training shards and train adapter parameters:
-
-```bash
-# Standard 15-epoch adapter training
-vynix train --dataset-dir /path/to/dataset --epochs 15 --batch-size 256 --output-dir saved_models_vitb16
-
-# Fast smoke-test training on subset
-vynix train --dataset-dir /path/to/dataset --epochs 3 --limit 500 --output-dir saved_models_test
-```
+| Model Configuration | Total Latency | Effective FPS | Detector Stage | CLIP Encoding Stage | Adapter & Veto Stage |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Vynix 1.0 (YOLOv8m)** | **21.19 ms/img** | **~47.2 FPS** | 7.91 ms | 12.39 ms | 0.74 ms |
+| **Vynix 2.0 (YOLOv8x)** | **30.83 ms/img** | **~32.4 FPS** | 17.50 ms | 12.38 ms | 0.76 ms |
 
 ---
 
-## 🏆 State-of-the-Art Literature Comparison (HICO-DET)
-
-| Method | Venue | Supervision | Train Images | GPU-Hours | Full mAP (600) | Rare mAP (155) | Non-Rare (445) |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **iCAN** | BMVC '18 | Fully Supervised | 38,118 | ~40h | 14.84% | 10.45% | 16.15% |
-| **TIN** | CVPR '19 | Fully Supervised | 38,118 | ~48h | 17.03% | 13.42% | 18.11% |
-| **VSGNet** | CVPR '20 | Fully Supervised | 38,118 | ~52h | 19.80% | 16.05% | 20.91% |
-| **PPDM** | CVPR '20 | Fully Supervised | 38,118 | ~60h | 21.73% | 13.78% | 24.10% |
-| **HOTR** | CVPR '21 | Fully Supervised | 38,118 | ~80h | 25.10% | 17.34% | 27.42% |
-| **FCL** | CVPR '21 | Fully Supervised | 38,118 | ~50h | 23.63% | 17.21% | 25.55% |
-| **QPIC** | CVPR '21 | Fully Supervised | 38,118 | ~72h | 29.07% | 21.85% | 31.23% |
-| **CDN** | NeurIPS '21 | Fully Supervised | 38,118 | ~75h | 31.78% | 27.55% | 33.05% |
-| **STIP** | CVPR '22 | Fully Supervised | 38,118 | ~64h | 32.22% | 28.15% | 33.44% |
-| **GEN-VLKT** | CVPR '22 | Fully Supervised | 38,118 | ~85h | 33.75% | 29.25% | 35.10% |
-| **HOI-CLIP** | CVPR '23 | Fully Supervised | 38,118 | ~45h | 34.69% | 31.12% | 35.75% |
-| **ViPLO** | CVPR '23 | Fully Supervised | 38,118 | ~90h | 37.35% | 35.61% | 37.87% |
-| **DiffHOI** | ICCV '23 | Fully Supervised | 38,118 | ~120h | 41.50% | 39.80% | 42.01% |
-| **ADA-CM** | CVPR '24 | Fully Supervised | 38,118 | ~140h | 43.20% | 41.50% | 43.70% |
-| **Vynix (Zero-Shot)** | **Ours** | **Zero-Shot** | **0** | **0.0h** | **22.17%** | **18.57%** | **23.42%** |
-| **Vynix-B16 (Phase 6)** | **Ours** | **Few-Shot** | **38,118** | **0.29h** | **30.31%** | **29.71%** | **30.51%** |
-| **Vynix Flagship (Phase 8)** | **Ours** | **Few-Shot** | **38,118** | **0.29h** | **31.71%** | **30.63%** | **32.07%** |
-| *Vynix (1-Shot)* | Ours | Few-Shot | 600 | 0.03h | 31.42% | 28.97% | 32.27% |
-| *Vynix (5-Shot)* | Ours | Few-Shot | 3,000 | 0.05h | 38.82% | 36.77% | 39.53% |
-| *Vynix (10-Shot)* | Ours | Few-Shot | 6,000 | 0.08h | 44.57% | 42.72% | 45.21% |
-
----
-
-## 📁 Repository Structure
+## 📁 Repository Structure (Vynix v3)
 
 ```
 Vynix/
-├── pyproject.toml              # Modern PEP 517/621 package build configuration
-├── setup.py                    # Standard distribution & setuptools entry points
-├── vynix_cli.py                # Unified CLI implementation (predict, eval, train)
-├── vynix_fewshot_adapter.py    # 3-Stream visual fusion & Tip-Adapter-F core
-├── train_vynix_full.py         # Full dataset shard extraction & training pipeline
-├── test_vynix_pretrained.py    # Standalone benchmark evaluation harness
-├── list_action.csv             # 600-class HICO-DET taxonomy definitions
-├── Vynix_Presentation_Review.pptx # 16:9 Widescreen PowerPoint Presentation Deck (with Speaker Notes)
-├── Vynix_Presentation_Review.html # Standalone interactive HTML5 presentation deck
-├── Vynix_System_Architecture.html  # Interactive system architecture diagram (Archify)
-├── Vynix_Interactive_Presentation_and_Benchmark.ipynb # Interactive Google Colab dashboard
-├── Vynix_IEEE_Research_Paper.pdf  # Camera-ready IEEE format 2-column paper
-├── saved_models_v2.0/          # ★ Official Vynix 2.0 SOTA Flagship (34.80% mAP)
-├── saved_models_v1.0/          # Official Vynix 1.0 Fallback Baseline (30.31% mAP)
-├── saved_models_vitb16/        # Active production checkpoints
-├── yolov8x.pt                  # YOLOv8 Extra-Large object & agent detector
-├── README.md                   # Project documentation
-└── requirements.txt            # Package dependencies
+├── src/                               # Core modular package
+│   ├── data/
+│   │   ├── class_splits.py            # Canonical 138 Rare / 462 Non-Rare splits, 80 COCO, 117 verbs
+│   │   └── predicates.py              # Canonical 59 contact / 58 non-contact verb partition
+│   ├── models/
+│   │   ├── vynix_fewshot_adapter.py   # Multi-stream visual fusion and Tip-Adapter-F core
+│   │   └── checkpoint_loader.py       # Unified loader with strict [N, 1536] shape validation
+│   ├── evaluation/
+│   │   └── hico_evaluator.py          # Official Box-Level Default setting evaluator (VOC10+ & 11P)
+│   └── config/
+│       ├── paths.py                   # Environment variable path resolver (no hardcoded drives)
+│       └── hyperparameters.py         # Loader for frozen hyperparameters
+├── configs/
+│   ├── paths.yaml                     # Centralized paths specification
+│   └── frozen_hyperparameters.json    # Frozen inference parameters (val_10 tuned)
+├── tests/                             # Automated reproducibility test suite
+│   ├── test_shapes.py                 # Tensor shape assertions across all 4 checkpoints
+│   ├── test_predicates.py             # Predicate count (117) and contact gate routing tests
+│   ├── test_evaluator.py              # Analytic toy case (5/6 PR-AUC), IoU veto, duplicate suppression
+│   ├── test_legacy_conf.py            # Ultralytics default confidence behavior verification
+│   └── test_regression.py            # 50-image bit-exact regression verification
+├── results/
+│   └── MANIFEST.csv                   # Command, seed, and file manifest for every reported metric
+├── review_response/                   # Audit tables, disclosures, and valuation scripts
+│   ├── FINAL_TABLES.md                # Official benchmark tables and ablation results
+│   ├── DISCLOSURES.md                 # Full disclosures on splits, gates, and thresholds
+│   └── frozen_hyperparameters.json    # Canonical frozen hyperparameters file
+├── archive/                           # Preserved legacy and scratch scripts (via git mv)
+│   └── INDEX.md                       # Comprehensive archive catalog and rationales
+├── regression_before.pt               # Deterministic 50-image regression baseline
+├── PAPER_TO_CODE.md                   # Systematic 13-point audit matrix linking paper to code
+├── CLEANUP_REPORT.md                  # Comprehensive Phase 2 refactoring report
+├── STALE_CLAIMS.md                    # Catalog of historical claims and superseded numbers
+├── requirements.lock                  # Frozen pip dependency lockfile
+└── README.md                          # Project documentation
 ```
+
+---
+
+## 🧪 Reproducibility & Testing
+
+All unit tests and reproducibility harnesses are executed through standard Python `unittest`:
+
+```bash
+# 1. Run all core unit tests (<10 seconds)
+python -m unittest tests/test_predicates.py tests/test_evaluator.py tests/test_shapes.py tests/test_legacy_conf.py
+
+# 2. Run the full test suite including the 50-image regression test
+python -m unittest discover tests
+
+# 3. Run standalone regression check against baseline
+python run_regression.py --compare regression_before.pt
+```
+
+---
+
+## 💻 Quickstart & Inference
+
+### Installation
+```bash
+git clone https://github.com/Jatindeswal/Vynix.git
+cd Vynix
+pip install -r requirements.txt
+```
+
+### Python API
+```python
+from src.models.checkpoint_loader import load_vynix_checkpoint
+from src.config.hyperparameters import get_inference_hyperparameters
+from src.data.predicates import is_contact_verb
+
+# Load Vynix 2.0 checkpoint with shape validation
+model = load_vynix_checkpoint("v2.0", device="cuda")
+print(f"Loaded {model['num_entries']} cached exemplars. Alpha: {model['alpha']:.4f}")
+
+# Retrieve frozen inference parameters
+params = get_inference_hyperparameters("vynix_2.0")
+print(f"Inference config: sigma={params['sigma']}, lambda={params['lambda']}")
+```
+
+---
+
+## 📜 Provenance & Audit Artifacts
+
+- [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md): Full test set evaluation tables, ablations, and veto breakdown.
+- [PAPER_TO_CODE.md](PAPER_TO_CODE.md): Paper claim-by-claim verification against code implementations.
+- [results/MANIFEST.csv](results/MANIFEST.csv): Exact commands to regenerate every number reported.
+- [CLEANUP_REPORT.md](CLEANUP_REPORT.md): Progression log of the Phase 2 declutter and consistency hardening.
+- [review_response/DISCLOSURES.md](review_response/DISCLOSURES.md): Transparent disclosures addressing all peer-review remarks.
 
 ---
 
