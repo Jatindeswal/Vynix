@@ -15,32 +15,32 @@
 
 ## Table 1: Standard Box-Level Default mAP vs. Legacy Image-Level AP
 
-*Comparison of the submitted paper's claims against clean empirical re-evaluation on all $9,658$ test images.*
+*Comparison of the submitted paper's claims against clean empirical re-evaluation on all $9,658$ test images under both VOC 2010+ continuous AP and the standard 11-point interpolated AP (VOC 2007 `11P`, as used in Chao et al. and fredzzhang/pocket).*
 
-| Model & Evaluation Split | Paper Claimed (Image-Level) `[LOG]` | Measured Image-Level AP `[MEASURED]` | Measured Standard Box-Level Default mAP `[MEASURED]` |
-|---|:---:|:---:|:---:|
-| **Vynix 1.0 (YOLOv8m + CLIP ViT-B/16)** | | | |
-| — Full ($600$ classes) | $30.31\%$ | **$30.25\%$** | **$12.23\%$** |
-| — Standard Rare ($138$ classes) | — | $18.29\%$ | **$11.14\%$** |
-| — Standard Non-Rare ($462$ classes) | — | $33.82\%$ | **$12.56\%$** |
-| — Legacy Pseudo-Rare ($150$ classes, $h \bmod 4 == 0$) | $29.71\%$ | **$29.71\%$** | $11.87\%$ |
-| — Legacy Pseudo-Non-Rare ($450$ classes) | $30.51\%$ | **$30.43\%$** | $12.35\%$ |
-| **Vynix 2.0 (YOLOv8x + CLIP ViT-B/16)** | | | |
-| — Full ($600$ classes) | $34.80\%$ | **$34.53\%$** | **$14.76\%$** |
-| — Standard Rare ($138$ classes) | — | $24.96\%$ | **$15.37\%$** |
-| — Standard Non-Rare ($462$ classes) | — | $37.39\%$ | **$14.58\%$** |
-| — Legacy Pseudo-Rare ($150$ classes, $h \bmod 4 == 0$) | $36.10\%$ | **$35.96\%$** | $16.11\%$ |
-| — Legacy Pseudo-Non-Rare ($450$ classes) | $34.37\%$ | **$34.05\%$** | $14.31\%$ |
-| **Intermediate: YOLOv8x + Unaligned v1.0 Cache** | | | |
-| — Full ($600$ classes) | $31.71\%$ | **$31.68\%$** | **$13.25\%$** |
-| — Standard Rare ($138$ classes) | — | $19.77\%$ | **$12.02\%$** |
-| — Standard Non-Rare ($462$ classes) | — | $35.23\%$ | **$13.62\%$** |
-| — Legacy Pseudo-Rare ($150$ classes) | $30.63\%$ | **$30.69\%$** | $12.71\%$ |
-| — Legacy Pseudo-Non-Rare ($450$ classes) | $32.07\%$ | **$32.01\%$** | $13.43\%$ |
+| Model & Evaluation Split | Paper Claimed (Image-Level) `[LOG]` | Measured Image-Level AP `[MEASURED]` | Standard Box Default mAP (Continuous VOC10+) `[MEASURED]` | Standard Box Default mAP (11-Point VOC07 `pocket/upt`) `[MEASURED]` |
+|---|:---:|:---:|:---:|:---:|
+| **Vynix 1.0 (YOLOv8m + CLIP ViT-B/16)** | | | | |
+| — Full ($600$ classes) | $30.31\%$ | **$30.25\%$** | **$12.23\%$** | **$12.80\%$** |
+| — Standard Rare ($138$ classes) | — | $18.29\%$ | **$11.14\%$** | **$10.69\%$** |
+| — Standard Non-Rare ($462$ classes) | — | $33.82\%$ | **$12.56\%$** | **$13.42\%$** |
+| — Legacy Pseudo-Rare ($150$ classes, $h \bmod 4 == 0$) | $29.71\%$ | **$29.71\%$** | $11.87\%$ | $12.39\%$ |
+| — Legacy Pseudo-Non-Rare ($450$ classes) | $30.51\%$ | **$30.43\%$** | $12.35\%$ | $12.93\%$ |
+| **Vynix 2.0 (YOLOv8x + CLIP ViT-B/16)** | | | | |
+| — Full ($600$ classes) | $34.80\%$ | **$34.53\%$** | **$14.76\%$** | **$15.29\%$** |
+| — Standard Rare ($138$ classes) | — | $24.96\%$ | **$15.37\%$** | **$14.71\%$** |
+| — Standard Non-Rare ($462$ classes) | — | $37.39\%$ | **$14.58\%$** | **$15.46\%$** |
+| — Legacy Pseudo-Rare ($150$ classes, $h \bmod 4 == 0$) | $36.10\%$ | **$35.96\%$** | $16.11\%$ | $16.71\%$ |
+| — Legacy Pseudo-Non-Rare ($450$ classes) | $34.37\%$ | **$34.05\%$** | $14.31\%$ | $14.83\%$ |
+| **Intermediate: YOLOv8x + Unaligned v1.0 Cache** | | | | |
+| — Full ($600$ classes) | $31.71\%$ | **$31.68\%$** | **$13.25\%$** | **$13.70\%$** |
+| — Standard Rare ($138$ classes) | — | $19.77\%$ | **$12.02\%$** | **$11.56\%$** |
+| — Standard Non-Rare ($462$ classes) | — | $35.23\%$ | **$13.62\%$** | **$14.34\%$** |
+| — Legacy Pseudo-Rare ($150$ classes) | $30.63\%$ | **$30.69\%$** | $12.71\%$ | $13.20\%$ |
+| — Legacy Pseudo-Non-Rare ($450$ classes) | $32.07\%$ | **$32.01\%$** | $13.43\%$ | $13.87\%$ |
 
 > **Key Audit Finding `[LOG]` & `[MEASURED]`**:
 > 1. The paper's claimed "Rare" and "Non-Rare" numbers were evaluated using a non-standard pseudo-rare heuristic (`h % 4 == 0`, $150$ classes) rather than the standard benchmark split ($138$ classes with $<10$ training instances). Under the pseudo-rare split, Vynix 1.0 achieves **$29.71\%$**, matching the paper's claim of $29.71\%$ to two decimal places.
-> 2. When evaluated under the official standard HICO-DET Box-Level Default mAP protocol ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$), Vynix 1.0 achieves **$12.23\%$** Full mAP and Vynix 2.0 achieves **$14.76\%$** Full mAP (a $+2.53\%$ absolute gain / $+20.7\%$ relative gain).
+> 2. When evaluated under the official standard HICO-DET Box-Level Default mAP protocol ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$), Vynix 1.0 achieves **$12.23\%$** (Continuous) / **$12.80\%$** (11-Point) Full mAP, and Vynix 2.0 achieves **$14.76\%$** (Continuous) / **$15.29\%$** (11-Point) Full mAP (a $+2.49\%$ to $+2.53\%$ absolute gain / $+19.5\%$ to $+20.7\%$ relative gain).
 
 ---
 

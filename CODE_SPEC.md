@@ -1,6 +1,6 @@
 # Project Vynix: Mathematical and Algorithmic Code Specification (`CODE_SPEC.md`)
 
-This document provides a rigorous, step-by-step mathematical specification of the Vynix interaction detection pipeline as implemented in source code. Every equation, tensor dimension, hyperparameter, and decision rule is cross-referenced with exact `file:line` locations in the repository.
+This document provides a rigorous, step-by-step mathematical specification of the Vynix human-object interaction detection pipeline as implemented in source code. Every equation, tensor dimension, hyperparameter, and decision rule is cross-referenced with exact `file:line` locations in the repository and verified against saved model weights.
 
 ---
 
@@ -69,63 +69,69 @@ For each candidate pair $(b_h, b_o)$:
 3. Union crop (`vynix_fewshot_adapter.py:165–167`):
    $$b_u = [\min(x_{h1}, x_{o1}), \, \min(y_{h1}, y_{o1}), \, \max(x_{h2}, x_{o2}), \, \max(y_{h2}, y_{o2})]$$
 
-### 3.2 Visual Feature Encoding
+### 3.2 Visual Feature Encoding & Fusion
 - In `extract_visual_features_batch()` (`vynix_fewshot_adapter.py:363–402`):
-  Each crop is cropped from $I$, resized to $224 \times 224$, normalized, and passed through frozen CLIP ViT-B/16 image encoder:
-  $$f_h' = \text{CLIP}_{\text{img}}(\text{crop}_h) \in \mathbb{R}^{512}, \quad f_o' = \text{CLIP}_{\text{img}}(\text{crop}_o) \in \mathbb{R}^{512}, \quad f_u' = \text{CLIP}_{\text{img}}(\text{crop}_u) \in \mathbb{R}^{512}$$
-  Each stream is normalized: $f_h = f_h' / \|f_h'\|_2$, $f_o = f_o' / \|f_o'\|_2$, $f_u = f_u' / \|f_u'\|_2$.
+  Each crop is extracted from $I$, resized to $224 \times 224$, normalized, and passed through frozen CLIP ViT-B/16 image encoder:
+  $$f_h = \frac{\text{CLIP}_{\text{img}}(\text{crop}_h)}{\|\text{CLIP}_{\text{img}}(\text{crop}_h)\|_2} \in \mathbb{R}^{512}, \quad f_o = \frac{\text{CLIP}_{\text{img}}(\text{crop}_o)}{\|\text{CLIP}_{\text{img}}(\text{crop}_o)\|_2} \in \mathbb{R}^{512}, \quad f_u = \frac{\text{CLIP}_{\text{img}}(\text{crop}_u)}{\|\text{CLIP}_{\text{img}}(\text{crop}_u)\|_2} \in \mathbb{R}^{512}$$
 - **Fused Visual Embedding**:
-  $$f_{\text{fused}} = \frac{[f_h \,\|\, f_o \,\|\, f_u]}{\|[f_h \,\|\, f_o \,\|\, f_u]\|_2} \in \mathbb{R}^{1536} \quad (\text{vynix\_fewshot\_adapter.py:400–401})$$
+  Concatenate the three unit-norm vectors and normalize by the Euclidean norm $\sqrt{\|f_h\|^2 + \|f_o\|^2 + \|f_u\|^2} = \sqrt{3}$:
+  $$f_{\text{fused}} = \frac{[f_h \,\|\, f_o \,\|\, f_u]}{\|[f_h \,\|\, f_o \,\|\, f_u]\|_2} = \frac{[f_h \,\|\, f_o \,\|\, f_u]}{\sqrt{3}} \in \mathbb{R}^{1536} \quad (\text{vynix\_fewshot\_adapter.py:400–401})$$
 
 ### 3.3 Zero-Shot CLIP Logits
-- In `evaluate_adapter()` (`vynix_fewshot_adapter.py:820`) and `evaluate_test_unified.py:328`:
-  $$S_{\text{vlm}} = f_u \cdot W_{\text{text}}^\top \in \mathbb{R}^{600}$$
-  *Implementation Detail*: Zero-shot CLIP logits are computed using **only the union crop feature** $f_u \in \mathbb{R}^{512}$ (slice `1024:1536`), projected against the 600 text embeddings.
+- In `evaluate_adapter()` (`vynix_fewshot_adapter.py:820`) and `evaluate_test_unified.py:363`:
+  Zero-shot CLIP logits are computed using the union slice $f_{\text{fused}}[:, 1024:1536] = \frac{f_u}{\sqrt{3}}$:
+  $$S_{\text{vlm}} = f_{\text{fused}}[:, 1024:1536] \cdot W_{\text{text}}^\top = \frac{f_u \cdot W_{\text{text}}^\top}{\sqrt{3}} \in \mathbb{R}^{600}$$
+  *Implementation Detail*: There is **no explicit logit-scale multiplier** (e.g., $100.0$ or $\exp(\tau)$ is absent). The logits have natural magnitude in $[-1/\sqrt{3}, 1/\sqrt{3}] \approx [-0.577, 0.577]$.
 
 ---
 
-## 4. Spatial Geometry Vector & Spatial MLP
+## 4. Spatial Geometry Vector & Spatial Prior MLP
 
-### 4.1 8-D Spatial Geometry Vector
+### 4.1 8-D Relative Spatial Vector
 - In `compute_spatial_vector()` (`vynix_fewshot_adapter.py:191–217`):
   Given bounding box coordinates and image dimensions $(W, H)$:
   $$\Delta x = \frac{(x_{h1} + x_{h2}) - (x_{o1} + x_{o2})}{2W}, \quad \Delta y = \frac{(y_{h1} + y_{h2}) - (y_{o1} + y_{o2})}{2H}$$
   $$w_h = \frac{x_{h2} - x_{h1}}{W}, \quad h_h = \frac{y_{h2} - y_{h1}}{H}, \quad w_o = \frac{x_{o2} - x_{o1}}{W}, \quad h_o = \frac{y_{o2} - y_{o1}}{H}$$
-  $$\text{IoU} = \frac{\text{area}(b_h \cap b_o)}{\text{area}(b_h \cup b_o)}$$
-  $$\text{log\_area\_ratio} = \ln\left(\frac{w_h \cdot h_h}{w_o \cdot h_o}\right)$$
+  $$\text{IoU} = \frac{\text{area}(b_h \cap b_o)}{\text{area}(b_h \cup b_o)}, \quad \text{log\_area\_ratio} = \ln\left(\frac{w_h \cdot h_h}{w_o \cdot h_o}\right)$$
   Vector formulation:
   $$g = [\Delta x, \, \Delta y, \, w_h, \, h_h, \, w_o, \, h_o, \, \text{IoU}, \, \text{log\_area\_ratio}]^\top \in \mathbb{R}^8$$
 
 ### 4.2 Spatial MLP Architecture
-- In `SpatialMLP` (`vynix_fewshot_adapter.py:249–270`):
-  $$f_{\text{geom}} = \text{GELU}(\text{Linear}_{128 \to 256}(\text{GELU}(\text{Linear}_{8 \to 128}(g)))) \in \mathbb{R}^{256}$$
+- In `SpatialMLP` (`vynix_fewshot_adapter.py:249–266`):
+  Maps the 8D relative spatial vector to 600 spatial interaction probability priors:
+  $$\text{net}(g) = \text{Sigmoid}\Big(\text{Linear}_{64 \to 600}\big(\text{ReLU}\big(\text{LayerNorm}_{64}\big(\text{Linear}_{8 \to 64}(g)\big)\big)\big)\Big) \in [0, 1]^{600}$$
+  Parameters verified from checkpoint:
+  - `net.0.weight` $\in \mathbb{R}^{64 \times 8}$, `net.0.bias` $\in \mathbb{R}^{64}$
+  - `net.1.weight` $\in \mathbb{R}^{64}$, `net.1.bias` $\in \mathbb{R}^{64}$ (LayerNorm)
+  - `net.3.weight` $\in \mathbb{R}^{600 \times 64}$, `net.3.bias` $\in \mathbb{R}^{600}$
 
 ---
 
-## 5. Non-Parametric Memory Cache & Alpha/Beta Blending
+## 5. Non-Parametric Memory Cache & Logit Blending
 
-### 5.1 Cache Key Construction
-- In `Vynix3StreamAdapter.forward()` (`vynix_fewshot_adapter.py:567–570`):
-  Concatenates 1536-D visual representation with 256-D spatial MLP embedding:
-  $$k_{\text{raw}} = [f_{\text{fused}} \,\|\, f_{\text{geom}}] \in \mathbb{R}^{1792}$$
-  $$k = \frac{k_{\text{raw}}}{\|k_{\text{raw}}\|_2} \in \mathbb{R}^{1792}$$
+### 5.1 Cache Structure
+- In `Vynix3StreamAdapter` (`vynix_fewshot_adapter.py:515–533`):
+  - Cache Keys: $K_{\text{cache}} \in \mathbb{R}^{N_{\text{cache}} \times 1536}$ (fused 1536-D visual embeddings).
+  - Cache Values (one-hot HOI labels): $V_{\text{cache}} \in \mathbb{R}^{N_{\text{cache}} \times 600}$.
+  - $N_{\text{cache}} = 19,824$ (Vynix 1.0) and $20,006$ (Vynix 2.0).
 
 ### 5.2 Cache Similarity & Affinity
-- Offline training cache stores $N_{\text{cache}}$ exemplars ($N_{\text{cache}} \approx 19,600$ pairs under `max_shots_per_class=50`):
-  - Cache Keys: $K_{\text{cache}} \in \mathbb{R}^{N_{\text{cache}} \times 1792}$
-  - Cache Values (one-hot HOI labels): $V_{\text{cache}} \in \mathbb{R}^{N_{\text{cache}} \times 600}$
-- Tip-Adapter exponential affinity calculation (`vynix_fewshot_adapter.py:575`):
-  $$A = \exp\left( -\beta \cdot (1 - k \cdot K_{\text{cache}}^\top) \right) \in \mathbb{R}^{1 \times N_{\text{cache}}}$$
-  where $\beta$ is a sharpness parameter ($\beta \approx 5.59$).
-
-### 5.3 Cache Logits and Blended Output
-- Cache retrieval logits (`vynix_fewshot_adapter.py:578`):
+- In `Vynix3StreamAdapter.forward()` (`vynix_fewshot_adapter.py:550–553`):
+  Cosine affinity between query $f_{\text{fused}} \in \mathbb{R}^{1536}$ and cached keys:
+  $$A = \exp\left(-\beta \cdot (1 - f_{\text{fused}} \cdot K_{\text{cache}}^\top)\right) \in \mathbb{R}^{1 \times N_{\text{cache}}}$$
+  where $\beta$ is a learned sharpness parameter ($\beta \approx 5.56$ for v1.0, $5.59$ for v2.0).
+- Cache retrieval logits:
   $$S_{\text{cache}} = A \cdot V_{\text{cache}} \in \mathbb{R}^{1 \times 600}$$
-- Blended logits (`vynix_fewshot_adapter.py:580`):
-  $$S_{\text{final}} = S_{\text{vlm}} + \alpha \cdot S_{\text{cache}} \in \mathbb{R}^{600}$$
-  *Equation Note*: The paper manuscript writes $(1 - \alpha) S_{\text{vlm}} + \alpha S_{\text{cache}}$, but the implementation follows Tip-Adapter's residual formulation: $S_{\text{vlm}} + \alpha S_{\text{cache}}$.
-- Softmax Normalization (`vynix_fewshot_adapter.py:822, evaluate\_test\_unified.py:330`):
-  $$P_{\text{base}} = \text{softmax}(S_{\text{final}}) \in \mathbb{R}^{600}, \quad P_{\text{base}}[c] = \frac{\exp(S_{\text{final}}[c])}{\sum_{j=0}^{599} \exp(S_{\text{final}}[j])}$$
+
+### 5.3 Blended Logits Formulation
+- In `Vynix3StreamAdapter.forward()` (`vynix_fewshot_adapter.py:555–563`):
+  $$S_{\text{blended}} = S_{\text{vlm}} + \alpha \cdot S_{\text{cache}}$$
+  When spatial MLP is enabled:
+  $$p_{\text{spatial}} = \text{SpatialMLP}(g) \in [0, 1]^{600}$$
+  $$S_{\text{final}} = S_{\text{blended}} + 0.5 \cdot \ln(p_{\text{spatial}} + 10^{-6})$$
+  where $\alpha$ is a learned weighting parameter ($\alpha \approx 0.955$ for v1.0, $0.939$ for v2.0).
+- Softmax Normalization (`vynix_fewshot_adapter.py:822, evaluate_test_unified.py:330`):
+  $$P_{\text{base}} = \text{softmax}(S_{\text{final}}) \in \mathbb{R}^{600}$$
 
 ---
 
@@ -141,7 +147,7 @@ For each candidate pair $(b_h, b_o)$:
       1.0 & \text{if } v \in \mathcal{V}_{\text{non-contact}} \text{ or } \text{IoU} > 0 \\
       \exp\left(-\left(\frac{d_{\text{box}}}{\sigma}\right)^2\right) & \text{if } v \in \mathcal{V}_{\text{contact}} \text{ and } \text{IoU} = 0
     \end{cases}$$
-  *Formula Discrepancy Note*: The implementation computes $\exp(-(d_{\text{box}}/\sigma)^2)$ (`vynix_fewshot_adapter.py:187`), whereas the manuscript text writes $\exp(-d_{\text{box}}^2 / (2\sigma^2))$. This is mathematically equivalent to substituting $\sigma_{\text{code}} = \sigma_{\text{paper}} \sqrt{2}$.
+  *Formula Discrepancy Note*: The source code computes $\exp(-(d_{\text{box}}/\sigma)^2)$ (`vynix_fewshot_adapter.py:187`), which is mathematically equivalent to the paper formula $\exp(-d_{\text{box}}^2 / (2\sigma_{\text{paper}}^2))$ with $\sigma = \sigma_{\text{paper}} \sqrt{2}$.
 
 ### 6.2 Object Semantic Identity Gate ($G_{\text{obj}}$)
 - In `evaluate_test_unified.py:348–356` (Vynix 2.0 only):
@@ -176,12 +182,16 @@ $$S_{\text{HOI}}(b_h, b_o, c) = (s_h \cdot s_o)^\lambda \cdot P_{\text{base}}[c]
 Triplets emitted to the evaluator:
 $$(b_h, b_o, c, S_{\text{HOI}})$$
 
-### 7.3 Ranking and Evaluation
+### 7.3 Ranking and Average Precision Evaluation Rules
 - For each image, up to $50 \times \bar{V} \approx 375$ triplets are emitted.
 - All predictions across all $9,658$ test images are accumulated.
 - For each HOI class $c \in \{0, \dots, 599\}$:
   1. All predictions across the dataset with class $c$ are sorted descending by score.
   2. Predictions are matched sequentially to unassigned ground-truth instances of class $c$ in the corresponding image.
   3. A prediction is a **True Positive** iff $\min(\text{IoU}(b_h, b_{h,\text{gt}}), \, \text{IoU}(b_o, b_{o,\text{gt}})) \ge 0.5$; otherwise **False Positive**.
-  4. Class average precision $\text{AP}_c$ is calculated using the official 11-point interpolated precision-recall formula.
-  5. Mean average precision (mAP) is computed as $\frac{1}{C}\sum_{c=1}^C \text{AP}_c$.
+- **AP Evaluation Rules**:
+  - **Rule A (VOC 2010+ / COCO continuous all-points interpolation)** (`review_response/hico_evaluator.py:42–63`):
+    $$AP_{\text{cont}} = \sum_{k} (r_{k+1} - r_k) \max_{\tilde{r} \ge r_{k+1}} p(\tilde{r})$$
+  - **Rule B (VOC 2007 11-point interpolation `11P`, standard in `fredzzhang/pocket` and `fredzzhang/upt:161`)**:
+    $$AP_{11\text{P}} = \frac{1}{11} \sum_{t \in \{0, 0.1, \dots, 1.0\}} \max_{\tilde{r} \ge t} p(\tilde{r})$$
+  Both rules yield consistent rankings; on the full test set, $AP_{11\text{P}}$ produces slightly higher overall mAP (+0.56% on v1.0, +0.53% on v2.0) due to 11-point sampling discretization.
