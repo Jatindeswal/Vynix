@@ -47,3 +47,17 @@ test_smoke.csv
 .vscode/
 .idea/
 *.swp
+
+# Scratch & Local Reports
+*.docx
+*.docx.*
+_check_layout.pdf
+_page*.png
+_v*.png
+_verify_report.py
+build_ntcc_report.py
+extract_test_data.py
+run_extract_test_data.bat
+launch_info.json
+launch_web_gui.bat
+start_server.vbs
