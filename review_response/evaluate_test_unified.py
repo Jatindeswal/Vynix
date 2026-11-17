@@ -275,13 +275,17 @@ def evaluate_unified(
                     gt_box_list = []
                     gt_img_hois = set()
                     for item in raw_objs:
-                        h_b = item.get("human_box") or item.get("h_box")
-                        o_b = item.get("object_box") or item.get("o_box")
-                        h_id = item.get("hoi_id")
+                        h_id = item.get("id")
                         if h_id is not None:
-                            gt_img_hois.add(h_id)
-                        if h_b and o_b and len(h_b) >= 4 and len(o_b) >= 4 and h_id is not None:
-                            gt_box_list.append((h_b, o_b, h_id))
+                            c = int(h_id) - 1
+                            if 0 <= c < meta.num_classes:
+                                gt_img_hois.add(c)
+                                hb = item.get("bbox_human")
+                                ob = item.get("bbox_object")
+                                if hb is not None and ob is not None and len(hb) >= 4 and len(ob) >= 4:
+                                    h_box = [float(hb[0]), float(hb[2]), float(hb[1]), float(hb[3])]
+                                    o_box = [float(ob[0]), float(ob[2]), float(ob[1]), float(ob[3])]
+                                    gt_box_list.append((h_box, o_box, c))
 
                     # Parse Image
                     img_data = row["image"]
