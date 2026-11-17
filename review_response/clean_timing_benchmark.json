@@ -1,0 +1,122 @@
+{
+  "vynix_1.0": {
+    "run_1": {
+      "model": "vynix_1.0",
+      "detector": "yolov8m.pt",
+      "num_images": 300,
+      "wall_clock_sec": 136.46453881263733,
+      "fps": 2.198373310826874,
+      "ms_per_img": {
+        "detector": 34.76120948791504,
+        "clip_encode": 414.945027033488,
+        "adapter_scoring": 3.264923890431722,
+        "total_measured": 454.8817960421244
+      },
+      "stage_totals_sec": {
+        "detector": 10.428362846374512,
+        "clip_encode": 124.48350811004639,
+        "adapter_scoring": 0.9794771671295166
+      },
+      "shares_pct": {
+        "detector": 7.641811519029433,
+        "clip_encode": 91.22040728907558,
+        "adapter_scoring": 0.7177521542606143
+      },
+      "extrapolation_9658_min": {
+        "detector": 5.59539602057139,
+        "clip_encode": 66.79231785149044,
+        "adapter_scoring": 0.5255439155631596,
+        "total": 73.2208064362473
+      }
+    },
+    "run_2": {
+      "model": "vynix_1.0",
+      "detector": "yolov8m.pt",
+      "num_images": 300,
+      "wall_clock_sec": 146.64435005187988,
+      "fps": 2.045765826599292,
+      "ms_per_img": {
+        "detector": 33.70044390360515,
+        "clip_encode": 450.47112623850506,
+        "adapter_scoring": 3.4123826026916504,
+        "total_measured": 488.8145001729329
+      },
+      "stage_totals_sec": {
+        "detector": 10.110133171081543,
+        "clip_encode": 135.1413378715515,
+        "adapter_scoring": 1.0237147808074951
+      },
+      "shares_pct": {
+        "detector": 6.894321647922186,
+        "clip_encode": 92.15584359284293,
+        "adapter_scoring": 0.6980935715868528
+      },
+      "extrapolation_9658_min": {
+        "detector": 5.424648120350309,
+        "clip_encode": 72.51083562019136,
+        "adapter_scoring": 0.5492798529465993,
+        "total": 78.68284071116977
+      }
+    }
+  },
+  "vynix_2.0": {
+    "run_1": {
+      "model": "vynix_2.0",
+      "detector": "yolov8x.pt",
+      "num_images": 300,
+      "wall_clock_sec": 161.30011463165283,
+      "fps": 1.8598870849229348,
+      "ms_per_img": {
+        "detector": 71.15332126617432,
+        "clip_encode": 461.8864878018697,
+        "adapter_scoring": 3.395354747772217,
+        "total_measured": 537.667048772176
+      },
+      "stage_totals_sec": {
+        "detector": 21.345996379852295,
+        "clip_encode": 138.5659463405609,
+        "adapter_scoring": 1.018606424331665
+      },
+      "shares_pct": {
+        "detector": 13.233714327233,
+        "clip_encode": 85.9056713363112,
+        "adapter_scoring": 0.6314976444113315
+      },
+      "extrapolation_9658_min": {
+        "detector": 11.453312946478524,
+        "clip_encode": 74.34832831984096,
+        "adapter_scoring": 0.5465389358997345,
+        "total": 86.54647261736129
+      }
+    },
+    "run_2": {
+      "model": "vynix_2.0",
+      "detector": "yolov8x.pt",
+      "num_images": 300,
+      "wall_clock_sec": 162.86138606071472,
+      "fps": 1.8420572688001071,
+      "ms_per_img": {
+        "detector": 69.74364995956421,
+        "clip_encode": 468.35481246312463,
+        "adapter_scoring": 3.5388811429341636,
+        "total_measured": 542.8712868690491
+      },
+      "stage_totals_sec": {
+        "detector": 20.923094987869263,
+        "clip_encode": 140.50644373893738,
+        "adapter_scoring": 1.061664342880249
+      },
+      "shares_pct": {
+        "detector": 12.847179736066556,
+        "clip_encode": 86.27363866752097,
+        "adapter_scoring": 0.6518821732761507
+      },
+      "extrapolation_9658_min": {
+        "detector": 11.226402855157852,
+        "clip_encode": 75.38951297948095,
+        "adapter_scoring": 0.5696419013076358,
+        "total": 87.3841814763546
+      }
+    }
+  }
+}
