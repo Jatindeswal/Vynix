@@ -1,5 +1,13 @@
 # Project Vynix 👁️🧠
 
+> [!WARNING]
+> **REPRODUCIBILITY AUDIT NOTICE: Standard Box-Level Default mAP vs. Legacy Image-Level AP**
+> - Earlier project drafts reported **image-level retrieval AP** ($30.31\%$ for v1.0, $34.80\%$ for v2.0) using a non-standard pseudo-rare split ($150$ classes with $h \bmod 4 == 0$). These image-level metrics evaluate whole-image HOI presence without bounding box spatial localization, and are **not comparable to published HICO-DET benchmark numbers**.
+> - Under the official **HICO-DET Standard Box-Level Default mAP protocol** ($\min(\text{IoU}_h, \text{IoU}_o) \ge 0.5$ on all $9,658$ test images, evaluated across the standard 600 Full / 138 Rare / 462 Non-Rare classes):
+>   - **Vynix 1.0 (YOLOv8m + CLIP ViT-B/16):** achieves **12.23%** (VOC10+ Continuous mAP) / **12.80%** (VOC07 11-point interpolated mAP).
+>   - **Vynix 2.0 (YOLOv8x + CLIP ViT-B/16):** achieves **14.76%** (VOC10+ Continuous mAP) / **15.29%** (VOC07 11-point interpolated mAP).
+> - Complete, verified tables, ablation benchmarks, and hyperparameter provenance are documented in [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md) and [review_response/DISCLOSURES.md](review_response/DISCLOSURES.md).
+
 > **Production-Grade Few-Shot Human-Object Interaction (HOI) Detection with Geometric Hallucination Veto**
 
 [![PyPI Version](https://img.shields.io/badge/pypi-v1.0.0-blue.svg)](https://pypi.org/)
@@ -80,22 +88,18 @@ Project Vynix implements a 5-stage decoupled reasoning pipeline:
 
 ## 📊 Benchmark Performance (HICO-DET Full Test Set)
 
-Evaluated across all **9,658 test images** and all **600 official HOI categories** under default settings:
+Evaluated across all **9,658 test images** and all **600 official HOI categories** under both the official Standard Box-Level Default setting (min(IoU_h, IoU_o) >= 0.5) and the legacy image-level retrieval metric:
 
-| Model Release | Detector | Vision Backbone | Full mAP (600) | Rare mAP (155) | Non-Rare mAP (445) | Hallucinations Vetoed | Release Tag / Weights |
+| Model Release | Detector | Vision Backbone | Box Full mAP (Continuous) | Box Full mAP (11-Point 11P) | Legacy Image-Level AP | Hallucinations Vetoed | Release Directory |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Vynix (Zero-Shot)** | YOLOv8n | CLIP ViT-B/32 | 22.17% | 18.57% | 23.42% | 319,803 | Zero-Shot Prior |
-| **Vynix-Adapter (ViT-B/32)** | YOLOv8m | CLIP ViT-B/32 | 28.23% | 28.98% | 27.98% | 265,189 | Phase 4 Checkpoint |
-| **Vynix 1.0 (Fallback Baseline)** | YOLOv8m | CLIP ViT-B/16 | **30.31%** | **29.71%** | **30.51%** | **265,189** | [`tag: v1.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v1.0) (`saved_models_v1.0/`) |
-| **Vynix-Opt (Phase 8)** | YOLOv8x | CLIP ViT-B/16 | 31.71% | 30.63% | 32.07% | 272,946 | Intermediate Milestone |
-| **★ Vynix 2.0 (Current SOTA Flagship)** | **YOLOv8x** | **CLIP ViT-B/16 (Aligned)** | **34.80%** | **36.10%** | **34.37%** | **272,946** | [`tag: v2.0`](https://github.com/Jatindeswal/Vynix/releases/tag/v2.0) (`saved_models_v2.0/`) |
-| *Vynix 1-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 31.42% | 28.97% | 32.27% | 265,189 | Few-Shot Support |
-| *Vynix 5-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 38.82% | 36.77% | 39.53% | 265,189 | Few-Shot Support |
-| *Vynix 10-Shot Exemplar* | YOLOv8m | CLIP ViT-B/16 | 44.57% | 42.72% | 45.21% | 265,189 | Closed Exemplar SOTA |
+| **Vynix 1.0** | YOLOv8m | CLIP ViT-B/16 | **12.23%** | **12.80%** | .25\%$ | **265,189** | saved_models_v1.0/ |
+| **Vynix 2.0** | **YOLOv8x** | **CLIP ViT-B/16** | **14.76%** | **15.29%** | **.53\%$** | **272,946** | saved_models_v2.0/ |
+| *YOLOv8x + v1 Cache* | YOLOv8x | CLIP ViT-B/16 | 13.25% | 13.70% | 31.68% | 272,946 | Intermediate Milestone |
 
-> **Release Comparison (v1.0 vs v2.0):**
-> - **Vynix 1.0 (Baseline Fallback):** The rock-solid, fully validated decoupled baseline achieving **30.31% Full mAP** with 97.4% parity, archived permanently in `saved_models_v1.0/` and tag `v1.0` as an immediate rollback guarantee.
-> - **Vynix 2.0 (Current SOTA Flagship):** The breakthrough release trained directly on native `yolov8x.pt` proposals, achieving **34.80% Full mAP** (+4.49% over v1.0) and **36.10% Rare mAP** (+6.39% over v1.0) with **105.0% retention parity** (Rare > Non-Rare), officially outperforming enterprise fully-supervised transformers like ViCHA (34.33%) and GEN-VLKT (33.75%). Active in `saved_models_v2.0/` and tag `v2.0`.
+> **Audit Findings on Splits & Performance:**
+> - **Box-Level Gain:** Upgrading the detector and aligning the cache from YOLOv8m to YOLOv8x delivers **+2.53% Box mAP** (.23\% \to 14.76\%$ continuous, $+20.7\%$ relative gain).
+> - **Standard Splits (138 Rare / 462 Non-Rare):** Under standard HICO-DET splits, Vynix 1.0 achieves .14\%$ Rare / .56\%$ Non-Rare mAP; Vynix 2.0 achieves .37\%$ Rare / .58\%$ Non-Rare mAP.
+> - **Legacy Claims:** The .31\%$ (v1.0) and .80\%$ (v2.0) figures were image-level classification APs evaluated without box localization checks, and should not be cited against published box-level HICO-DET detectors. Full details in [review_response/FINAL_TABLES.md](review_response/FINAL_TABLES.md).
 
 ### 🛡️ Hallucination Veto Impact:
 - **272,946** false-positive contact hallucinations suppressed across the official test set.

@@ -1,0 +1,32 @@
+# ==============================================================================
+# Project Vynix: Centralized Path & Storage Configuration
+# ==============================================================================
+# All paths resolve relative to workspace root unless an environment variable override
+# is specified. Hardcoded drive letters (e.g., C:, D:, E:) are strictly prohibited.
+
+dataset:
+  # Base dataset directory (override via VYNIX_DATASET_DIR)
+  root_dir: "${VYNIX_DATASET_DIR:-data/hico_20160224_det}"
+  # Directory containing Parquet shards
+  parquet_dir: "${VYNIX_PARQUET_DIR:-data/hico_det_parquet}"
+  # Extracted image files for visual demo apps
+  extracted_images_dir: "${VYNIX_IMAGES_DIR:-data/extracted_test_images}"
+  # Benchmark split definitions
+  splits_dir: "splits"
+
+models:
+  # Saved model checkpoints and caches
+  v1_dir: "${VYNIX_V1_DIR:-saved_models_v1.0}"
+  v2_dir: "${VYNIX_V2_DIR:-saved_models_v2.0}"
+  v1_train90_dir: "${VYNIX_V1_TRAIN90_DIR:-saved_models_v1.0_train90}"
+  v2_train90_dir: "${VYNIX_V2_TRAIN90_DIR:-saved_models_v2.0_train90}"
+  # Pretrained backbone weights
+  yolo_m: "yolov8m.pt"
+  yolo_x: "yolov8x.pt"
+  clip_backbone: "openai/clip-vit-base-patch16"
+
+outputs:
+  # Evaluator prediction caches and results
+  predictions_dir: "${VYNIX_PREDICTIONS_DIR:-test_predictions}"
+  results_dir: "results"
+  review_response_dir: "review_response"

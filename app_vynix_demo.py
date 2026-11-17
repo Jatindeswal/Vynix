@@ -2,6 +2,12 @@
 """
 PROJECT VYNIX — Interactive Demo & Web Visualizer
 =================================================
+OUTDATED NOTICE: Legacy demo dashboard. Metrics previously displayed (e.g., 30.31% mAP)
+reflect image-level retrieval without spatial localization, not comparable to published
+HICO-DET box-level mAP. Under official standard box-level Default mAP (IoU >= 0.5):
+Vynix 1.0 achieves 12.23% (Cont) / 12.80% (11P); Vynix 2.0 achieves 14.76% (Cont) / 15.29% (11P).
+See review_response/FINAL_TABLES.md for verified benchmarks.
+=================================================
 A high-performance Streamlit dashboard for real-time Human-Object Interaction (HOI)
 detection and spatial reasoning with the Vynix framework.
 
